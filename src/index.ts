@@ -152,6 +152,12 @@ class GameStateManager {
   // Ball state
   ballX = 0; ballZ = 0;
   ballVX = 0; ballVZ = 0;
+  ballSpin = 0; // lateral spin (-1 to 1), affects curve
+  ballSpinDecay = 0.97;
+
+  // Camera shake
+  cameraShakeIntensity = 0;
+  cameraShakeDecay = 0.92;
 
   // Power-ups
   activePowerUp: string | null = null;
@@ -175,6 +181,15 @@ class GameStateManager {
   // Settings
   sfxVol = 80;
   musicVol = 60;
+
+  // Commentary
+  lastCommentaryTime = 0;
+  commentaryInterval = 8; // minimum seconds between auto-commentary
+  consecutiveAIGoals = 0;
+  consecutivePlayerGoals = 0;
+  longestRally = 0;
+  currentRally = 0;
+  goalTimes: number[] = []; // timestamps of goals for stats
 
   // Persistence
   stats = {
@@ -248,6 +263,12 @@ class GameStateManager {
     this.magnetActive = false;
     this.powerUpsCollected = 0;
     this.ballTrailPositions = [];
+    this.consecutiveAIGoals = 0;
+    this.consecutivePlayerGoals = 0;
+    this.longestRally = 0;
+    this.currentRally = 0;
+    this.goalTimes = [];
+    this.cameraShakeIntensity = 0;
     // AI personality randomization
     const personalities: Array<'aggressive' | 'defensive' | 'balanced' | 'reactive'> = ['aggressive', 'defensive', 'balanced', 'reactive'];
     if (this.mode === 'daily') {
@@ -262,6 +283,7 @@ class GameStateManager {
   resetBall() {
     this.ballX = 0;
     this.ballZ = 0;
+    this.ballSpin = 0;
     if (this.mode === 'daily') {
       const rng = mulberry32(dateSeed() + this.playerScore + this.aiScore);
       this.ballVX = (rng() - 0.5) * 2;
@@ -359,6 +381,17 @@ const ACHIEVEMENTS: Achievement[] = [
   { id: 'vs_defensive', name: 'Siege Master', desc: 'Beat a defensive AI', check: () => GM.state === 'gameover' && GM.aiPersonality === 'defensive' && GM.playerScore > GM.aiScore },
   { id: 'big_ball_goal', name: 'Big Score', desc: 'Score with Big Ball active', check: () => GM.bigBallActive && GM.playerScore > 0 },
   { id: 'magnet_goal', name: 'Attraction', desc: 'Score with Magnet active', check: () => GM.magnetActive && GM.playerScore > 0 },
+  // Round 3 achievements
+  { id: 'curve_master', name: 'Curve Master', desc: 'Score 10 curved shots', check: () => GM.stats.totalGoals >= 10 && Math.abs(GM.ballSpin) > 0.1 },
+  { id: 'rally_10', name: 'Rally Master', desc: '10-touch rally in one play', check: () => GM.longestRally >= 10 },
+  { id: 'rally_20', name: 'Rally Legend', desc: '20-touch rally in one play', check: () => GM.longestRally >= 20 },
+  { id: 'quick_win', name: 'Speedrun', desc: 'Win in under 2 minutes', check: () => GM.state === 'gameover' && GM.playerScore > GM.aiScore && GM.matchTime < 120 },
+  { id: 'lvl5', name: 'Apprentice', desc: 'Reach level 5', check: () => GM.stats.level >= 5 },
+  { id: 'goals_200', name: 'Sniper Elite', desc: 'Score 200 total goals', check: () => GM.stats.totalGoals >= 200 },
+  { id: 'saves_100', name: 'Wall of Steel', desc: '100 total saves', check: () => GM.stats.totalSaves >= 100 },
+  { id: 'streak10', name: 'Unstoppable', desc: 'Win 10 in a row', check: () => GM.stats.currentStreak >= 10 },
+  { id: 'shutout_hard', name: 'Perfect Game', desc: 'Shutout on Hard', check: () => GM.state === 'gameover' && GM.difficulty === 'hard' && GM.playerScore > GM.aiScore && GM.aiScore === 0 },
+  { id: 'all_skins', name: 'Collector', desc: 'Unlock all skins', check: () => GM.skinUnlocked.size >= 8 },
 ];
 
 // ========== AUDIO ENGINE ==========
@@ -607,6 +640,66 @@ class AudioEngine {
   }
 }
 
+// ========== COMMENTARY SYSTEM ==========
+function generateCommentary(event: string): string | null {
+  const r = () => Math.random();
+  if (event === 'player_goal') {
+    GM.consecutivePlayerGoals++;
+    GM.consecutiveAIGoals = 0;
+    GM.goalTimes.push(GM.matchTime);
+    const opts = [
+      'GOAL! Brilliant strike!',
+      'What a shot! The net is shaking!',
+      'Clean finish! Unstoppable!',
+      'GOOOAL! Superb technique!',
+      'Right through the defense!',
+    ];
+    if (GM.consecutivePlayerGoals >= 3) return 'A HAT TRICK! Incredible run!';
+    if (GM.combo >= 4) return `x${GM.combo} COMBO! On fire!`;
+    if (GM.lastGoalTime < 5) return 'LIGHTNING GOAL! Under 5 seconds!';
+    if (GM.playerScore - GM.aiScore >= 4) return 'Total domination! What a performance!';
+    return opts[Math.floor(r() * opts.length)];
+  }
+  if (event === 'ai_goal') {
+    GM.consecutiveAIGoals++;
+    GM.consecutivePlayerGoals = 0;
+    const opts = [
+      'AI scores! Caught off guard.',
+      'Goal against! The AI strikes back.',
+      'Conceded! Need to tighten up.',
+      'AI finds the gap!',
+    ];
+    if (GM.consecutiveAIGoals >= 3) return 'AI hat trick! Mounting pressure!';
+    if (GM.aiScore - GM.playerScore >= 3) return 'Falling behind! Time to rally!';
+    return opts[Math.floor(r() * opts.length)];
+  }
+  if (event === 'big_save') {
+    const opts = ['Great save!', 'Denied! What reflexes!', 'Stopped on the line!', 'The keeper says NO!'];
+    return opts[Math.floor(r() * opts.length)];
+  }
+  if (event === 'close_call') {
+    const opts = ['Just wide!', 'Off the post!', 'So close!', 'Inches away!'];
+    return opts[Math.floor(r() * opts.length)];
+  }
+  if (event === 'power_kick') {
+    const opts = ['POWER SHOT!', 'Thunderbolt!', 'What a strike!'];
+    return opts[Math.floor(r() * opts.length)];
+  }
+  if (event === 'rally') {
+    return `${GM.currentRally}-touch rally!`;
+  }
+  return null;
+}
+
+function tryCommentary(event: string) {
+  if (GM.matchTime - GM.lastCommentaryTime < 2.0 && event !== 'player_goal' && event !== 'ai_goal') return;
+  const msg = generateCommentary(event);
+  if (msg) {
+    showToast(msg);
+    GM.lastCommentaryTime = GM.matchTime;
+  }
+}
+
 const audio = new AudioEngine();
 
 // ========== PARTICLE SYSTEM ==========
@@ -841,6 +934,73 @@ const penD = 0.7;
   });
 });
 
+// ========== TABLE LEGS & SUPPORTS ==========
+const legMat = new MeshStandardMaterial({ color: 0x444466, metalness: 0.7, roughness: 0.3 });
+const legGlowMat = new MeshBasicMaterial({ color: new Color(GM.theme.accent).getHex(), transparent: true, opacity: 0.2, blending: AdditiveBlending });
+const legPositions = [
+  [-TABLE_W / 2 + 0.15, -TABLE_W / 2 + 0.15],
+  [TABLE_W / 2 - 0.15, -TABLE_W / 2 + 0.15],
+  [-TABLE_W / 2 + 0.15, TABLE_W / 2 - 0.15],
+  [TABLE_W / 2 - 0.15, TABLE_W / 2 - 0.15],
+];
+const legHeight = 0.9;
+const tableLegMeshes: Mesh[] = [];
+const tableLegGlows: Mesh[] = [];
+legPositions.forEach(([x, z]) => {
+  // Main leg cylinder
+  const leg = new Mesh(new CylinderGeometry(0.035, 0.045, legHeight, 8), legMat);
+  leg.position.set(x, -legHeight / 2, z);
+  tableGroup.add(leg);
+  tableLegMeshes.push(leg);
+  // Glow ring at base
+  const glowRing = new Mesh(
+    new TorusGeometry(0.06, 0.008, 8, 16),
+    legGlowMat.clone()
+  );
+  glowRing.rotation.x = Math.PI / 2;
+  glowRing.position.set(x, -legHeight + 0.02, z);
+  tableGroup.add(glowRing);
+  tableLegGlows.push(glowRing);
+  // Foot pad
+  const pad = new Mesh(new CylinderGeometry(0.06, 0.06, 0.02, 8), legMat);
+  pad.position.set(x, -legHeight, z);
+  tableGroup.add(pad);
+});
+
+// ========== GOAL POST NEON LIGHTS ==========
+const goalPostMat1 = new MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.6, blending: AdditiveBlending });
+const goalPostMat2 = new MeshBasicMaterial({ color: 0xff4444, transparent: true, opacity: 0.6, blending: AdditiveBlending });
+const goalPosts: Mesh[] = [];
+
+function makeGoalPosts(zSide: number, mat: MeshBasicMaterial) {
+  const z = zSide * TABLE_L / 2;
+  [-GOAL_W / 2, GOAL_W / 2].forEach(x => {
+    const post = new Mesh(new CylinderGeometry(0.015, 0.015, WALL_H * 1.2, 8), mat);
+    post.position.set(x, TABLE_H / 2 + WALL_H * 0.6, z);
+    tableGroup.add(post);
+    goalPosts.push(post);
+    // Post glow
+    const glow = new Mesh(
+      new SphereGeometry(0.04, 8, 8),
+      new MeshBasicMaterial({ color: mat.color.getHex(), transparent: true, opacity: 0.3, blending: AdditiveBlending })
+    );
+    glow.position.set(x, TABLE_H / 2 + WALL_H * 1.2, z);
+    tableGroup.add(glow);
+    goalPosts.push(glow);
+  });
+  // Crossbar
+  const crossbar = new Mesh(
+    new CylinderGeometry(0.012, 0.012, GOAL_W, 8),
+    mat.clone()
+  );
+  crossbar.rotation.z = Math.PI / 2;
+  crossbar.position.set(0, TABLE_H / 2 + WALL_H * 1.2, z);
+  tableGroup.add(crossbar);
+  goalPosts.push(crossbar);
+}
+makeGoalPosts(-1, goalPostMat1); // AI goal (player scores here) = green
+makeGoalPosts(1, goalPostMat2);  // Player goal (AI scores here) = red
+
 // ========== BALL ==========
 const ballGeo = new SphereGeometry(BALL_R, 16, 16);
 const ballMat = new MeshStandardMaterial({ color: new Color(GM.theme.ball), emissive: new Color(GM.theme.ball), emissiveIntensity: 0.5, metalness: 0.6, roughness: 0.3 });
@@ -884,6 +1044,30 @@ function updateBallTrail() {
     } else {
       trailMeshes[i].visible = false;
     }
+  }
+}
+
+// ========== BALL SPIN INDICATOR ==========
+const spinIndicator = new Mesh(
+  new TorusGeometry(BALL_R * 2.0, 0.005, 8, 16),
+  new MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0, blending: AdditiveBlending, side: DoubleSide })
+);
+spinIndicator.rotation.x = Math.PI / 2;
+spinIndicator.position.y = TABLE_H / 2 + 0.002;
+tableGroup.add(spinIndicator);
+
+function updateSpinIndicator() {
+  const spinAbs = Math.abs(GM.ballSpin);
+  if (spinAbs > 0.05 && GM.state === 'playing') {
+    spinIndicator.visible = true;
+    spinIndicator.position.x = GM.ballX;
+    spinIndicator.position.z = GM.ballZ;
+    (spinIndicator.material as MeshBasicMaterial).opacity = Math.min(0.5, spinAbs);
+    spinIndicator.rotation.z += GM.ballSpin * 3;
+    const spinColor = GM.ballSpin > 0 ? 0xff4488 : 0x44aaff;
+    (spinIndicator.material as MeshBasicMaterial).color.setHex(spinColor);
+  } else {
+    spinIndicator.visible = false;
   }
 }
 
@@ -1103,6 +1287,24 @@ ROD_CONFIGS.forEach((cfg, i) => {
   aiRods.push(createRod(-cfg.z, cfg.count, cfg.spacing, false, GM.theme.player2));
 });
 
+// ========== ROD HANDLE GRIPS ==========
+const handleMat = new MeshStandardMaterial({ color: 0x888888, metalness: 0.6, roughness: 0.4 });
+
+function addRodHandles(rods: Rod[], side: number) {
+  rods.forEach(rod => {
+    const handleX = side * (TABLE_W / 2 + 0.2);
+    const grip = new Mesh(new CylinderGeometry(0.025, 0.025, 0.12, 8), handleMat);
+    grip.rotation.z = Math.PI / 2;
+    grip.position.set(handleX, 0, 0);
+    rod.group.add(grip);
+    const knob = new Mesh(new SphereGeometry(0.03, 8, 8), handleMat);
+    knob.position.set(handleX + side * 0.08, 0, 0);
+    rod.group.add(knob);
+  });
+}
+addRodHandles(playerRods, 1);
+addRodHandles(aiRods, -1);
+
 // ========== SELECTED ROD INDICATOR ==========
 const selectedIndicator = new Mesh(
   new TorusGeometry(0.08, 0.015, 8, 16),
@@ -1155,6 +1357,8 @@ function applyTheme() {
   });
   // Floating decorations
   floatingDecos.forEach(d => (d.material as MeshBasicMaterial).color.set(theme.grid));
+  // Table legs glow
+  tableLegGlows.forEach(g => (g.material as MeshBasicMaterial).color.set(theme.accent));
   // Goal glows retain fixed colors (green=player, red=AI)
   (selectedIndicator.material as MeshBasicMaterial).color.set(theme.player1);
 }
@@ -1381,7 +1585,8 @@ function updateGameOverPanel() {
   const secs = Math.floor(GM.matchTime % 60);
   setPanelText('gameover', 'stat-time', `Time: ${mins}:${secs < 10 ? '0' : ''}${secs}`);
   setPanelText('gameover', 'stat-combo', `Best Combo: x${GM.bestCombo}`);
-  const xpGain = GM.playerScore * 10 + (won ? 50 : 10) + GM.bestCombo * 5;
+  setPanelText('gameover', 'stat-rally', `Longest Rally: ${GM.longestRally}`);
+  const xpGain = GM.playerScore * 10 + (won ? 50 : 10) + GM.bestCombo * 5 + GM.longestRally;
   GM.addXP(xpGain);
   setPanelText('gameover', 'stat-xp', `+${xpGain} XP`);
   setPanelText('gameover', 'stat-powerups', `Power-ups: ${GM.powerUpsCollected}`);
@@ -1529,10 +1734,13 @@ function updateBallPhysics(delta: number) {
       } else {
         // AI scores!
         GM.aiScore++;
+        GM.currentRally = 0;
         audio.playSfx('concede');
+        GM.cameraShakeIntensity = 0.02;
         spawnParticles(GM.ballX + tableGroup.position.x, 1.2, GM.ballZ + tableGroup.position.z, 0xff4444, 20);
         GM.combo = 0;
         deactivatePowerUp();
+        tryCommentary('ai_goal');
         setPanelText('goal', 'scorer-text', 'AI scored!');
         setPanelText('goal', 'score-text', `${GM.playerScore} - ${GM.aiScore}`);
         setState('goal');
@@ -1555,15 +1763,17 @@ function updateBallPhysics(delta: number) {
       GM.playerScore++;
       GM.stats.totalGoals++;
       GM.lastGoalTime = GM.matchTime;
+      GM.currentRally = 0;
       GM.combo++;
       GM.comboTimer = 5;
       if (GM.combo > GM.bestCombo) GM.bestCombo = GM.combo;
       if (GM.combo > 1) {
-        showToast(`x${GM.combo} COMBO!`);
         audio.playSfx('combo');
       }
+      GM.cameraShakeIntensity = 0.025;
       audio.playSfx('goal');
       spawnParticles(GM.ballX + tableGroup.position.x, 1.2, GM.ballZ + tableGroup.position.z, 0x00ff88, 25);
+      tryCommentary('player_goal');
       setPanelText('goal', 'scorer-text', 'GOAL!');
       setPanelText('goal', 'score-text', `${GM.playerScore} - ${GM.aiScore}`);
       setState('goal');
@@ -1586,6 +1796,12 @@ function updateBallPhysics(delta: number) {
   // Friction
   GM.ballVX *= BALL_FRICTION;
   GM.ballVZ *= BALL_FRICTION;
+
+  // Apply ball spin (curve effect)
+  if (Math.abs(GM.ballSpin) > 0.01) {
+    GM.ballVX += GM.ballSpin * 0.8 * delta;
+    GM.ballSpin *= GM.ballSpinDecay;
+  }
 
   // Clamp speed
   const speed = Math.sqrt(GM.ballVX * GM.ballVX + GM.ballVZ * GM.ballVZ);
@@ -1624,9 +1840,23 @@ function checkRodBallCollisions(rods: Rod[]) {
         GM.ballVX = hitOffset * power * 0.7;
         GM.ballVZ = direction * power;
 
+        // Ball spin from hit offset (edge hits add curve)
+        GM.ballSpin = hitOffset * 0.6 * (kickActive ? 1.5 : 1.0);
+
+        // Rally counter
+        GM.currentRally++;
+        if (GM.currentRally > GM.longestRally) GM.longestRally = GM.currentRally;
+        if (GM.currentRally >= 10 && GM.currentRally % 5 === 0) tryCommentary('rally');
+
         // Push ball out of collision
         if (GM.ballZ > rodZ) GM.ballZ = rodZ + PLAYER_R + BALL_R + 0.01;
         else GM.ballZ = rodZ - PLAYER_R - BALL_R - 0.01;
+
+        // Camera shake on hard hits
+        if (kickActive) {
+          GM.cameraShakeIntensity = Math.min(0.015, power * 0.002);
+          if (rod.isPlayer) tryCommentary('power_kick');
+        }
 
         // Collision spark particles
         const sparkColor = rod.isPlayer ? new Color(GM.theme.player1).getHex() : new Color(GM.theme.player2).getHex();
@@ -1641,6 +1871,7 @@ function checkRodBallCollisions(rods: Rod[]) {
         if (rod.isPlayer && rod === playerRods[0]) {
           GM.saves++;
           audio.playSfx('save');
+          tryCommentary('big_save');
         }
         return;
       }
@@ -1965,6 +2196,7 @@ class FoosballGameSystem extends createSystem({}) {
       // Ball trail
       GM.ballTrailPositions.forEach(p => p.age += dt);
       updateBallTrail();
+      updateSpinIndicator();
 
       // AI
       updateAI(dt);
@@ -2063,6 +2295,20 @@ class FoosballGameSystem extends createSystem({}) {
     // Toast
     processToast(dt);
 
+    // Camera shake
+    if (GM.cameraShakeIntensity > 0.001) {
+      const shakeX = (Math.random() - 0.5) * GM.cameraShakeIntensity;
+      const shakeY = (Math.random() - 0.5) * GM.cameraShakeIntensity;
+      tableGroup.position.x = shakeX;
+      tableGroup.position.z = -2.5 + (Math.random() - 0.5) * GM.cameraShakeIntensity;
+      GM.cameraShakeIntensity *= GM.cameraShakeDecay;
+      if (GM.cameraShakeIntensity < 0.001) {
+        tableGroup.position.x = 0;
+        tableGroup.position.z = -2.5;
+        GM.cameraShakeIntensity = 0;
+      }
+    }
+
     // Floating decoration animation
     for (const deco of floatingDecos) {
       const ud = deco.userData;
@@ -2075,6 +2321,17 @@ class FoosballGameSystem extends createSystem({}) {
     const pulse = 0.3 + Math.sin(performance.now() * 0.003) * 0.2;
     (playerGoalGlow.material as MeshBasicMaterial).opacity = pulse;
     (aiGoalGlow.material as MeshBasicMaterial).opacity = pulse;
+
+    // Goal post pulse
+    goalPosts.forEach(p => {
+      const mat = p.material as MeshBasicMaterial;
+      if (mat.transparent) mat.opacity = 0.4 + Math.sin(performance.now() * 0.002) * 0.2;
+    });
+
+    // Table leg glow pulse
+    tableLegGlows.forEach((g, i) => {
+      (g.material as MeshBasicMaterial).opacity = 0.15 + Math.sin(performance.now() * 0.002 + i * 1.5) * 0.1;
+    });
 
     // Selected rod indicator pulse
     (selectedIndicator.material as MeshBasicMaterial).opacity = 0.4 + Math.sin(performance.now() * 0.005) * 0.3;

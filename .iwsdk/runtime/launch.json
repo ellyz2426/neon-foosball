@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "workspaceRoot": "/home/hatch/workspace/neon-foosball",
+  "pid": 3751,
+  "command": "npm",
+  "args": [
+    "run",
+    "dev:runtime"
+  ],
+  "logPath": "/home/hatch/workspace/neon-foosball/.iwsdk/runtime/logs/dev-1783328245268.log",
+  "scriptName": "dev:runtime",
+  "port": 5173,
+  "openBrowser": false,
+  "createdAt": "2026-07-06T08:57:34.850Z"
+}

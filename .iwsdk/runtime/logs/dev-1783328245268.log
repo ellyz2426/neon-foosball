@@ -1,0 +1,69 @@
+
+> neon-foosball@1.0.0 dev:runtime
+> vite
+
+🚀 Generating initial UIKitML files for dev server...
+👁️  UIKitML file watcher started - monitoring for changes...
+
+  VITE v7.3.5  ready in 3257 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://198.19.0.2:5173/
+8:58:35 AM [vite] (client) page reload src/index.ts
+8:58:40 AM [vite] (client) page reload src/index.ts
+8:58:45 AM [vite] (client) page reload src/index.ts
+8:58:50 AM [vite] (client) page reload src/index.ts
+8:58:54 AM [vite] (client) page reload src/index.ts
+8:59:10 AM [vite] (client) page reload src/index.ts
+8:59:41 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328381520:920:15
+8:59:58 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328398777:920:15
+9:00:03 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328403922:920:15
+9:00:15 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328415536:920:15
+9:00:24 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328424883:920:15
+9:00:29 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328429551:920:15
+9:00:41 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328441117:920:15
+9:00:47 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328447596:920:15
+9:00:55 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328455152:920:15
+9:01:07 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328467768:931:15
+9:01:13 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328473468:931:15
+📝 UIKitML file change: ui/gameover.uikitml
+✅ UIKitML file recompiled: gameover.uikitml
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328473468:931:15
+9:01:47 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328507329:933:15
+9:01:51 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328511702:933:15
+9:02:15 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328535613:932:15
+9:02:22 AM [vite] (client) page reload src/index.ts
+[browser:pageerror] ReferenceError: Cannot access 'playerRods' before initialization
+    at http://localhost:5173/src/index.ts?t=1783328542315:932:15
+9:02:38 AM [vite] (client) page reload src/index.ts
+9:02:47 AM [vite] (client) page reload src/index.ts
+9:02:51 AM [vite] (client) page reload src/index.ts
