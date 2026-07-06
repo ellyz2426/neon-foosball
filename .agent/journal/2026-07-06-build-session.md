@@ -58,3 +58,22 @@
 
 ## Status
 - 195/360 min (54%) — waiting_continuation
+
+## Round 4 (60 min)
+- Goal nets: neon wireframe strands (vertical + horizontal) behind both goals, back panel, top netting, shimmer animation
+- Scoreboard hologram above table: pip-based score display, gentle sway animation, theme-reactive
+- Ball glow intensity scales with speed (brighter + larger glow at high speed, emissive scales too)
+- Ambient holodeck particles: 40 floating sparkle dust with drift, pulse, and scale animation
+- Rod sliding SFX: soft metallic slide sound on keyboard/controller input
+- Star rating system on game over: 1-5 stars based on win/loss, accuracy, combo, shutout, rally, difficulty
+- Slow-motion effect on match-winning goals (time scaling 0.25x with gradual ramp back to 1x)
+- Comeback tracking (maxTrailingBy deficit → comeback_kid achievement)
+- Combo triple tracking (comboTriples counter → triple_threat achievement)
+- 10 new achievements → 70 total: comeback_kid, five_star, speed_goal, purist, rally_30, endurance, triple_threat, time_lord, wins_50, daily_streak
+- Theme-reactive: scoreboard, ambient particles all update with theme switch
+- Net shimmer animation synced to global pulse
+- Star bonus adds to XP calculation (+10 per star)
+- LOC: 2,561 → deployed
+
+## Status
+- 255/360 min (71%) — waiting_continuation
