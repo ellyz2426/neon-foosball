@@ -194,6 +194,7 @@ class GameStateManager {
   comboTriples = 0; // count of times combo hit 3+ in a match
   slowMoTimer = 0; // slow-motion effect timer
   slowMoScale = 1; // time scale during slow-mo
+  tournamentBracket: { round: number; wins: number; losses: number }[] = []; // bracket history
 
   // Persistence
   stats = {
@@ -277,6 +278,7 @@ class GameStateManager {
     this.comboTriples = 0;
     this.slowMoTimer = 0;
     this.slowMoScale = 1;
+    if (this.mode === 'tournament' && this.tournamentRound === 0) this.tournamentBracket = [];
     // AI personality randomization
     const personalities: Array<'aggressive' | 'defensive' | 'balanced' | 'reactive'> = ['aggressive', 'defensive', 'balanced', 'reactive'];
     if (this.mode === 'daily') {
@@ -411,6 +413,17 @@ const ACHIEVEMENTS: Achievement[] = [
   { id: 'total_time_5h', name: 'Time Lord', desc: '5 hours total play time', check: () => GM.stats.playTime >= 18000 },
   { id: 'wins_50', name: 'Half Century', desc: 'Win 50 games', check: () => GM.stats.wins >= 50 },
   { id: 'daily_streak', name: 'Daily Grinder', desc: 'Win 5 daily challenges', check: () => false },
+  // Round 5 achievements
+  { id: 'hard_shutout_10', name: 'Iron Curtain', desc: '10 shutout wins on Hard', check: () => false },
+  { id: 'total_saves_250', name: 'Brick Wall', desc: '250 total saves', check: () => GM.stats.totalSaves >= 250 },
+  { id: 'goals_1000', name: 'Millennium', desc: '1,000 total goals', check: () => GM.stats.totalGoals >= 1000 },
+  { id: 'rally_50', name: 'Rally Immortal', desc: '50-touch rally', check: () => GM.longestRally >= 50 },
+  { id: 'tournament_3', name: 'Championship Run', desc: 'Win 3 tournaments', check: () => false },
+  { id: 'level_40', name: 'Veteran Elite', desc: 'Reach level 40', check: () => GM.stats.level >= 40 },
+  { id: 'speed_hard', name: 'Speed Freak', desc: 'Win Speed on Hard', check: () => GM.state === 'gameover' && GM.mode === 'speed' && GM.difficulty === 'hard' && GM.playerScore > GM.aiScore },
+  { id: 'combo_15', name: 'Combo Deity', desc: 'Get x15 combo', check: () => GM.bestCombo >= 15 },
+  { id: 'survival_15', name: 'Immortal', desc: 'Survive 15 minutes', check: () => GM.survivalTime >= 900 },
+  { id: 'all_themes', name: 'Theme Explorer', desc: 'Play in all 5 themes', check: () => false },
 ];
 
 // ========== AUDIO ENGINE ==========
@@ -589,6 +602,17 @@ class AudioEngine {
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
       o.connect(g); g.connect(this.sfxGain);
       o.start(t); o.stop(t + 0.06);
+    } else if (type === 'wall_bounce') {
+      // Quick flash sound for wall impact
+      const o = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = 600 * pitchVar;
+      o.frequency.exponentialRampToValueAtTime(200, t + 0.04);
+      g.gain.setValueAtTime(0.08, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+      o.connect(g); g.connect(this.sfxGain);
+      o.start(t); o.stop(t + 0.04);
     }
   }
 
@@ -1160,6 +1184,133 @@ function updateAmbientParticles(dt: number) {
   }
 }
 
+// ========== WALL BOUNCE FLASH ==========
+const wallFlashMeshes: Mesh[] = [];
+const wallFlashGeo = new SphereGeometry(0.06, 6, 6);
+for (let i = 0; i < 4; i++) {
+  const mat = new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, blending: AdditiveBlending });
+  const m = new Mesh(wallFlashGeo, mat);
+  m.visible = false;
+  tableGroup.add(m);
+  wallFlashMeshes.push(m);
+}
+let wallFlashIdx = 0;
+function triggerWallFlash(x: number, y: number, z: number, color: number) {
+  const m = wallFlashMeshes[wallFlashIdx % wallFlashMeshes.length];
+  wallFlashIdx++;
+  m.position.set(x, y, z);
+  (m.material as MeshBasicMaterial).color.setHex(color);
+  (m.material as MeshBasicMaterial).opacity = 0.7;
+  m.visible = true;
+  m.scale.setScalar(1);
+  m.userData.flashLife = 0.2;
+}
+function updateWallFlashes(dt: number) {
+  for (const m of wallFlashMeshes) {
+    if (!m.visible) continue;
+    m.userData.flashLife -= dt;
+    if (m.userData.flashLife <= 0) { m.visible = false; continue; }
+    const t = m.userData.flashLife / 0.2;
+    (m.material as MeshBasicMaterial).opacity = t * 0.7;
+    m.scale.setScalar(1 + (1 - t) * 2);
+  }
+}
+
+// ========== TABLE SURFACE GLOW (follows ball) ==========
+const tableGlow = new Mesh(
+  new SphereGeometry(0.25, 12, 6),
+  new MeshBasicMaterial({ color: new Color(GM.theme.ball).getHex(), transparent: true, opacity: 0.08, blending: AdditiveBlending })
+);
+tableGlow.scale.set(1, 0.1, 1);
+tableGlow.position.y = TABLE_H / 2 + 0.005;
+tableGroup.add(tableGlow);
+
+function updateTableGlow() {
+  tableGlow.position.x = GM.ballX;
+  tableGlow.position.z = GM.ballZ;
+  const speed = Math.sqrt(GM.ballVX * GM.ballVX + GM.ballVZ * GM.ballVZ);
+  const intensity = Math.min(0.15, 0.04 + speed * 0.015);
+  (tableGlow.material as MeshBasicMaterial).opacity = intensity;
+  const glowSize = 0.25 + Math.min(0.3, speed * 0.04);
+  tableGlow.scale.set(glowSize / 0.25, 0.1, glowSize / 0.25);
+  (tableGlow.material as MeshBasicMaterial).color.set(GM.theme.ball);
+}
+
+// ========== ELECTRIC ARCS ON GOAL POSTS ==========
+const arcMeshes: Mesh[] = [];
+const arcMat = new MeshBasicMaterial({ color: new Color(GM.theme.accent).getHex(), transparent: true, opacity: 0.3, blending: AdditiveBlending });
+// Arc segments between posts (4 arcs: 2 per goal)
+[[-1, 0x00ff88], [1, 0xff4444]].forEach(([zSide, color]) => {
+  const z = (zSide as number) * TABLE_L / 2;
+  for (let i = 0; i < 3; i++) {
+    const arcSeg = new Mesh(
+      new CylinderGeometry(0.003, 0.003, GOAL_W * 0.3, 4),
+      new MeshBasicMaterial({ color: color as number, transparent: true, opacity: 0, blending: AdditiveBlending })
+    );
+    arcSeg.rotation.z = Math.PI / 2;
+    arcSeg.position.set(0, TABLE_H / 2 + WALL_H * (0.4 + i * 0.3), z);
+    tableGroup.add(arcSeg);
+    arcMeshes.push(arcSeg);
+  }
+});
+
+function updateElectricArcs(dt: number) {
+  const t = performance.now() * 0.001;
+  arcMeshes.forEach((arc, i) => {
+    // Random flicker
+    const flicker = Math.sin(t * 15 + i * 7) * Math.sin(t * 23 + i * 3);
+    const opacity = flicker > 0.3 ? 0.3 + flicker * 0.3 : 0;
+    (arc.material as MeshBasicMaterial).opacity = opacity;
+    // Slight position jitter
+    arc.position.x = (Math.random() - 0.5) * 0.1;
+    const scaleX = 0.8 + Math.random() * 0.4;
+    arc.scale.x = scaleX;
+  });
+}
+
+// ========== SPEED TRAIL PARTICLES ==========
+const speedTrailMeshes: Mesh[] = [];
+const speedTrailGeo = new SphereGeometry(0.01, 4, 4);
+for (let i = 0; i < 8; i++) {
+  const mat = new MeshBasicMaterial({ color: new Color(GM.theme.ball).getHex(), transparent: true, opacity: 0, blending: AdditiveBlending });
+  const m = new Mesh(speedTrailGeo, mat);
+  m.visible = false;
+  tableGroup.add(m);
+  speedTrailMeshes.push(m);
+}
+let speedTrailTimer = 0;
+
+function updateSpeedTrail(dt: number) {
+  const speed = Math.sqrt(GM.ballVX * GM.ballVX + GM.ballVZ * GM.ballVZ);
+  if (speed > 4.0 && GM.state === 'playing') {
+    speedTrailTimer += dt;
+    if (speedTrailTimer > 0.03) {
+      speedTrailTimer = 0;
+      // Find inactive trail mesh
+      for (const m of speedTrailMeshes) {
+        if (!m.visible) {
+          m.visible = true;
+          m.position.set(GM.ballX, TABLE_H / 2 + BALL_R, GM.ballZ);
+          (m.material as MeshBasicMaterial).opacity = 0.4;
+          (m.material as MeshBasicMaterial).color.set(GM.theme.ball);
+          m.scale.setScalar(0.5 + speed * 0.1);
+          m.userData.trailLife = 0.15;
+          break;
+        }
+      }
+    }
+  }
+  // Decay
+  for (const m of speedTrailMeshes) {
+    if (!m.visible) continue;
+    m.userData.trailLife -= dt;
+    if (m.userData.trailLife <= 0) { m.visible = false; continue; }
+    const t = m.userData.trailLife / 0.15;
+    (m.material as MeshBasicMaterial).opacity = t * 0.4;
+    m.scale.multiplyScalar(0.95);
+  }
+}
+
 // ========== BALL ==========
 const ballGeo = new SphereGeometry(BALL_R, 16, 16);
 const ballMat = new MeshStandardMaterial({ color: new Color(GM.theme.ball), emissive: new Color(GM.theme.ball), emissiveIntensity: 0.5, metalness: 0.6, roughness: 0.3 });
@@ -1690,6 +1841,11 @@ function setState(newState: GameState) {
       spawnParticles(tableGroup.position.x, 2.5, tableGroup.position.z, new Color(GM.theme.player1).getHex(), 40);
       spawnParticles(tableGroup.position.x - 1, 2.0, tableGroup.position.z, new Color(GM.theme.accent).getHex(), 20);
       spawnParticles(tableGroup.position.x + 1, 2.0, tableGroup.position.z, new Color(GM.theme.glow).getHex(), 20);
+      // Extra confetti on shutout
+      if (GM.aiScore === 0) {
+        spawnParticles(tableGroup.position.x - 0.5, 3.0, tableGroup.position.z - 1, 0xffff00, 30);
+        spawnParticles(tableGroup.position.x + 0.5, 3.0, tableGroup.position.z + 1, 0xff00ff, 30);
+      }
     } else {
       audio.playDefeatJingle();
     }
@@ -1735,7 +1891,9 @@ function updateHUD() {
   if (GM.mode === 'timed') {
     const mins = Math.floor(GM.timeLeft / 60);
     const secs = Math.floor(GM.timeLeft % 60);
-    setPanelText('hud', 'time-display', `${mins}:${secs < 10 ? '0' : ''}${secs}`);
+    const timerStr = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    const critical = GM.timeLeft <= 30;
+    setPanelText('hud', 'time-display', critical ? `! ${timerStr} !` : timerStr);
   } else if (GM.mode === 'survival') {
     const mins = Math.floor(GM.survivalTime / 60);
     const secs = Math.floor(GM.survivalTime % 60);
@@ -1769,6 +1927,13 @@ function updateGameOverPanel() {
   setPanelText('gameover', 'stat-xp', `+${xpGain} XP`);
   setPanelText('gameover', 'stat-powerups', `Power-ups: ${GM.powerUpsCollected}`);
   setPanelText('gameover', 'stat-ai', `AI: ${GM.aiPersonality.charAt(0).toUpperCase() + GM.aiPersonality.slice(1)}`);
+  // Tournament bracket display
+  if (GM.mode === 'tournament') {
+    const bracketStr = GM.tournamentBracket.map((r, i) => `R${i + 1}: ${r.wins > r.losses ? 'W' : 'L'}`).join(' ');
+    setPanelText('gameover', 'stat-bracket', `Bracket: ${bracketStr}`);
+  } else {
+    setPanelText('gameover', 'stat-bracket', '');
+  }
 }
 
 function calcStarRating(won: boolean, accuracy: number): number {
@@ -1850,6 +2015,9 @@ function finishMatch() {
   GM.stats.modesPlayed.add(GM.mode);
   if (GM.bestCombo > GM.stats.bestCombo) GM.stats.bestCombo = GM.bestCombo;
   const won = GM.playerScore > GM.aiScore;
+  if (GM.mode === 'tournament') {
+    GM.tournamentBracket.push({ round: GM.tournamentRound, wins: won ? 1 : 0, losses: won ? 0 : 1 });
+  }
   if (won) {
     GM.stats.wins++;
     GM.stats.currentStreak++;
@@ -1904,8 +2072,8 @@ function updateBallPhysics(delta: number) {
 
   // Wall collisions (left/right)
   const halfW = TABLE_W / 2 - BALL_R;
-  if (GM.ballX < -halfW) { GM.ballX = -halfW; GM.ballVX = Math.abs(GM.ballVX) * 0.9; audio.playSfx('wall'); }
-  if (GM.ballX > halfW) { GM.ballX = halfW; GM.ballVX = -Math.abs(GM.ballVX) * 0.9; audio.playSfx('wall'); }
+  if (GM.ballX < -halfW) { GM.ballX = -halfW; GM.ballVX = Math.abs(GM.ballVX) * 0.9; audio.playSfx('wall'); triggerWallFlash(-halfW, TABLE_H / 2 + BALL_R, GM.ballZ, new Color(GM.theme.accent).getHex()); }
+  if (GM.ballX > halfW) { GM.ballX = halfW; GM.ballVX = -Math.abs(GM.ballVX) * 0.9; audio.playSfx('wall'); triggerWallFlash(halfW, TABLE_H / 2 + BALL_R, GM.ballZ, new Color(GM.theme.accent).getHex()); }
 
   // End wall collisions (with goal openings)
   const halfL = TABLE_L / 2 - BALL_R;
@@ -2055,6 +2223,11 @@ function checkRodBallCollisions(rods: Rod[]) {
         // Collision spark particles
         const sparkColor = rod.isPlayer ? new Color(GM.theme.player1).getHex() : new Color(GM.theme.player2).getHex();
         spawnParticles(GM.ballX + tableGroup.position.x, TABLE_H / 2 + BALL_R + tableGroup.position.y, GM.ballZ + tableGroup.position.z, sparkColor, kickActive ? 8 : 3);
+        // Figure hit glow pulse
+        const figMat = rod.playerMat;
+        const origEmissive = figMat.emissiveIntensity;
+        figMat.emissiveIntensity = 1.0;
+        setTimeout(() => { figMat.emissiveIntensity = origEmissive; }, 150);
         audio.playSfx(kickActive ? 'kick' : 'hit');
         if (kickActive && rod.isPlayer) GM.shots++;
 
@@ -2548,6 +2721,18 @@ class FoosballGameSystem extends createSystem({}) {
 
     // Ambient holodeck particles
     updateAmbientParticles(dt);
+
+    // Wall bounce flashes
+    updateWallFlashes(dt);
+
+    // Table surface glow
+    updateTableGlow();
+
+    // Electric arcs on goal posts
+    updateElectricArcs(dt);
+
+    // Speed trail particles
+    updateSpeedTrail(dt);
 
     // Net shimmer
     const netShimmer = 0.12 + Math.sin(performance.now() * 0.002) * 0.04;

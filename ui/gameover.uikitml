@@ -13,6 +13,7 @@
     <text name="stat-stars" fontSize="5" color="#ffaa00">★★★☆☆</text>
     <text name="stat-powerups" fontSize="3" color="#ff8800">Power-ups: 0</text>
     <text name="stat-ai" fontSize="3" color="#888888">AI: Balanced</text>
+    <text name="stat-bracket" fontSize="3" color="#ffaa00"></text>
     <text name="stat-xp" fontSize="3" color="#ffff00">+120 XP</text>
   </container>
   <container direction="row" gap="4" padding="2">
