@@ -1,0 +1,14 @@
+<container direction="column" gap="3" padding="6" alignItems="center" backgroundColor="#000814" borderRadius="3" borderWidth="0.5" borderColor="#ff8800">
+  <text fontSize="7" fontWeight="bold" color="#ff8800">TABLE SKINS</text>
+  <container direction="column" gap="2" padding="2" alignItems="center">
+    <text name="skin0" fontSize="3" color="#00ff88" backgroundColor="#003322" padding="2" borderRadius="1" cursor="pointer">[*] Neon Cyan (Default)</text>
+    <text name="skin1" fontSize="3" color="#ff4444" backgroundColor="#330000" padding="2" borderRadius="1" cursor="pointer">[ ] Solar Flare (10 wins)</text>
+    <text name="skin2" fontSize="3" color="#ff44ff" backgroundColor="#330033" padding="2" borderRadius="1" cursor="pointer">[ ] Plasma Pink (50 goals)</text>
+    <text name="skin3" fontSize="3" color="#00ccff" backgroundColor="#002233" padding="2" borderRadius="1" cursor="pointer">[ ] Frost Blue (25 games)</text>
+    <text name="skin4" fontSize="3" color="#88ff00" backgroundColor="#223300" padding="2" borderRadius="1" cursor="pointer">[ ] Toxic Green (5 shutouts)</text>
+    <text name="skin5" fontSize="3" color="#ffaa00" backgroundColor="#332200" padding="2" borderRadius="1" cursor="pointer">[ ] Royal Gold (Win tournament)</text>
+    <text name="skin6" fontSize="3" color="#8800ff" backgroundColor="#110033" padding="2" borderRadius="1" cursor="pointer">[ ] Void Purple (x8 combo)</text>
+    <text name="skin7" fontSize="3" color="#ff6600" backgroundColor="#331100" padding="2" borderRadius="1" cursor="pointer">[ ] Inferno (100 goals)</text>
+  </container>
+  <text name="btn-back" fontSize="4" color="#ff4444" backgroundColor="#330000" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ff4444" cursor="pointer">BACK</text>
+</container>

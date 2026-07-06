@@ -1,0 +1,10 @@
+<container direction="column" gap="4" padding="4" alignItems="center" backgroundColor="#000814" borderRadius="3" borderWidth="0.5" borderColor="#00e5ff">
+  <text name="action-label" fontSize="5" fontWeight="bold" color="#ffaa00">SELECT ROD</text>
+  <container direction="row" gap="3" padding="2">
+    <text name="btn-rod1" fontSize="4" color="#00ff88" backgroundColor="#003322" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#00ff88" cursor="pointer">GK</text>
+    <text name="btn-rod2" fontSize="4" color="#00ccff" backgroundColor="#002233" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#00ccff" cursor="pointer">DEF</text>
+    <text name="btn-rod3" fontSize="4" color="#ff44ff" backgroundColor="#330033" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ff44ff" cursor="pointer">MID</text>
+    <text name="btn-rod4" fontSize="4" color="#ffaa00" backgroundColor="#332200" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ffaa00" cursor="pointer">ATK</text>
+  </container>
+  <text name="btn-kick" fontSize="5" fontWeight="bold" color="#ff4444" backgroundColor="#330000" padding="3" borderRadius="2" borderWidth="0.3" borderColor="#ff4444" cursor="pointer">KICK!</text>
+</container>

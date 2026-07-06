@@ -1,0 +1,15 @@
+<container direction="column" gap="8" padding="6" alignItems="center" backgroundColor="#000814" borderRadius="3" borderWidth="0.5" borderColor="#00e5ff">
+  <text name="game-title" fontSize="10" fontWeight="bold" color="#00e5ff">NEON FOOSBALL</text>
+  <text name="subtitle" fontSize="4" color="#0088aa">HOLOGRAPHIC TABLE FOOTBALL</text>
+  <text name="level-display" fontSize="3" color="#00ccff">Level 1 - Rookie</text>
+  <container direction="column" gap="3" alignItems="center" padding="4">
+    <text name="btn-play" fontSize="5" fontWeight="bold" color="#00ff88" backgroundColor="#003322" padding="3" borderRadius="2" borderWidth="0.3" borderColor="#00ff88" cursor="pointer">PLAY</text>
+    <text name="btn-modes" fontSize="4" color="#ffaa00" backgroundColor="#332200" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ffaa00" cursor="pointer">GAME MODES</text>
+    <text name="btn-scores" fontSize="4" color="#ff44ff" backgroundColor="#330033" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ff44ff" cursor="pointer">LEADERBOARD</text>
+    <text name="btn-achievements" fontSize="4" color="#ffff00" backgroundColor="#333300" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ffff00" cursor="pointer">ACHIEVEMENTS</text>
+    <text name="btn-stats" fontSize="4" color="#00ccff" backgroundColor="#002233" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#00ccff" cursor="pointer">STATS</text>
+    <text name="btn-skins" fontSize="4" color="#ff8800" backgroundColor="#331100" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ff8800" cursor="pointer">TABLE SKINS</text>
+    <text name="btn-settings" fontSize="4" color="#8888ff" backgroundColor="#111133" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#8888ff" cursor="pointer">SETTINGS</text>
+    <text name="btn-help" fontSize="4" color="#aaaaaa" backgroundColor="#222222" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#666666" cursor="pointer">HELP</text>
+  </container>
+</container>

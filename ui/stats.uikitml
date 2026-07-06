@@ -1,0 +1,18 @@
+<container direction="column" gap="3" padding="6" alignItems="center" backgroundColor="#000814" borderRadius="3" borderWidth="0.5" borderColor="#00ccff">
+  <text fontSize="7" fontWeight="bold" color="#00ccff">STATS</text>
+  <container direction="column" gap="2" padding="2" alignItems="center">
+    <text name="stat0" fontSize="3" color="#cccccc">Games Played: 0</text>
+    <text name="stat1" fontSize="3" color="#cccccc">Wins: 0</text>
+    <text name="stat2" fontSize="3" color="#cccccc">Losses: 0</text>
+    <text name="stat3" fontSize="3" color="#cccccc">Win Rate: 0%</text>
+    <text name="stat4" fontSize="3" color="#cccccc">Total Goals: 0</text>
+    <text name="stat5" fontSize="3" color="#cccccc">Goals Conceded: 0</text>
+    <text name="stat6" fontSize="3" color="#cccccc">Best Combo: x0</text>
+    <text name="stat7" fontSize="3" color="#cccccc">Total Shots: 0</text>
+    <text name="stat8" fontSize="3" color="#cccccc">Total Saves: 0</text>
+    <text name="stat9" fontSize="3" color="#cccccc">Play Time: 0m</text>
+    <text name="stat10" fontSize="3" color="#cccccc">Win Streak: 0</text>
+    <text name="stat11" fontSize="3" color="#ffff00">Level: 1 (0 XP)</text>
+  </container>
+  <text name="btn-back" fontSize="4" color="#ff4444" backgroundColor="#330000" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ff4444" cursor="pointer">BACK</text>
+</container>

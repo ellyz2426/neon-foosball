@@ -1,0 +1,5 @@
+<container direction="column" gap="5" padding="6" alignItems="center" backgroundColor="#000814" borderRadius="3" borderWidth="0.5" borderColor="#ffaa00">
+  <text fontSize="7" fontWeight="bold" color="#ffaa00">PAUSED</text>
+  <text name="btn-resume" fontSize="5" color="#00ff88" backgroundColor="#003322" padding="3" borderRadius="2" borderWidth="0.3" borderColor="#00ff88" cursor="pointer">RESUME</text>
+  <text name="btn-quit" fontSize="5" color="#ff4444" backgroundColor="#330000" padding="3" borderRadius="2" borderWidth="0.3" borderColor="#ff4444" cursor="pointer">QUIT</text>
+</container>

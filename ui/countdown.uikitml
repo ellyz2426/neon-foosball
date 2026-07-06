@@ -1,0 +1,3 @@
+<container direction="column" alignItems="center" padding="4" backgroundColor="#00081480" borderRadius="3">
+  <text name="countdown-text" fontSize="14" fontWeight="bold" color="#00e5ff">3</text>
+</container>

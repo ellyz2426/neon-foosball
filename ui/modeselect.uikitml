@@ -1,0 +1,14 @@
+<container direction="column" gap="5" padding="6" alignItems="center" backgroundColor="#000814" borderRadius="3" borderWidth="0.5" borderColor="#00e5ff">
+  <text fontSize="7" fontWeight="bold" color="#00e5ff">GAME MODES</text>
+  <container direction="column" gap="3" alignItems="center" padding="2">
+    <text name="btn-quick" fontSize="4" color="#00ff88" backgroundColor="#003322" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#00ff88" cursor="pointer">Quick Match - First to 5</text>
+    <text name="btn-classic" fontSize="4" color="#00ccff" backgroundColor="#002233" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#00ccff" cursor="pointer">Classic - First to 10</text>
+    <text name="btn-timed" fontSize="4" color="#ffaa00" backgroundColor="#332200" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ffaa00" cursor="pointer">Timed - 3 Minutes</text>
+    <text name="btn-tournament" fontSize="4" color="#ff44ff" backgroundColor="#330033" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ff44ff" cursor="pointer">Tournament - 4 Rounds</text>
+    <text name="btn-daily" fontSize="4" color="#ffff00" backgroundColor="#333300" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ffff00" cursor="pointer">Daily Challenge</text>
+    <text name="btn-survival" fontSize="4" color="#ff4444" backgroundColor="#330000" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ff4444" cursor="pointer">Survival - Stay Alive</text>
+    <text name="btn-speed" fontSize="4" color="#ff8800" backgroundColor="#331100" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ff8800" cursor="pointer">Speed - Fast Ball</text>
+    <text name="btn-practice" fontSize="4" color="#aaaaaa" backgroundColor="#222222" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#666666" cursor="pointer">Practice - No Score</text>
+  </container>
+  <text name="btn-back" fontSize="4" color="#ff4444" backgroundColor="#330000" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ff4444" cursor="pointer">BACK</text>
+</container>

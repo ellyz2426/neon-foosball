@@ -1,0 +1,16 @@
+<container direction="column" gap="4" padding="6" alignItems="center" backgroundColor="#000814" borderRadius="3" borderWidth="0.5" borderColor="#ff44ff">
+  <text fontSize="7" fontWeight="bold" color="#ff44ff">LEADERBOARD</text>
+  <container direction="column" gap="1" padding="2" alignItems="center">
+    <text name="row0" fontSize="3" color="#ffff00">1. 10-2 Quick 95%</text>
+    <text name="row1" fontSize="3" color="#cccccc">2. 10-4 Classic 80%</text>
+    <text name="row2" fontSize="3" color="#cccccc">3. 8-5 Timed 70%</text>
+    <text name="row3" fontSize="3" color="#cccccc">4. 5-3 Quick 65%</text>
+    <text name="row4" fontSize="3" color="#cccccc">5. 5-4 Speed 60%</text>
+    <text name="row5" fontSize="3" color="#cccccc">6. ---</text>
+    <text name="row6" fontSize="3" color="#cccccc">7. ---</text>
+    <text name="row7" fontSize="3" color="#cccccc">8. ---</text>
+    <text name="row8" fontSize="3" color="#cccccc">9. ---</text>
+    <text name="row9" fontSize="3" color="#cccccc">10. ---</text>
+  </container>
+  <text name="btn-back" fontSize="4" color="#ff4444" backgroundColor="#330000" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ff4444" cursor="pointer">BACK</text>
+</container>

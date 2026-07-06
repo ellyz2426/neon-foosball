@@ -1,0 +1,24 @@
+<container direction="column" gap="4" padding="6" alignItems="center" backgroundColor="#000814" borderRadius="3" borderWidth="0.5" borderColor="#8888ff">
+  <text fontSize="7" fontWeight="bold" color="#8888ff">SETTINGS</text>
+  <container direction="column" gap="3" padding="2" alignItems="center">
+    <container direction="row" gap="2" alignItems="center">
+      <text fontSize="3" color="#cccccc">SFX Volume:</text>
+      <text name="btn-sfx-down" fontSize="3" color="#00ccff" backgroundColor="#002233" padding="1" borderRadius="1" cursor="pointer">-</text>
+      <text name="sfx-val" fontSize="3" color="#00e5ff">80%</text>
+      <text name="btn-sfx-up" fontSize="3" color="#00ccff" backgroundColor="#002233" padding="1" borderRadius="1" cursor="pointer">+</text>
+    </container>
+    <container direction="row" gap="2" alignItems="center">
+      <text fontSize="3" color="#cccccc">Music Volume:</text>
+      <text name="btn-music-down" fontSize="3" color="#00ccff" backgroundColor="#002233" padding="1" borderRadius="1" cursor="pointer">-</text>
+      <text name="music-val" fontSize="3" color="#00e5ff">60%</text>
+      <text name="btn-music-up" fontSize="3" color="#00ccff" backgroundColor="#002233" padding="1" borderRadius="1" cursor="pointer">+</text>
+    </container>
+    <container direction="row" gap="2" alignItems="center">
+      <text fontSize="3" color="#cccccc">Theme:</text>
+      <text name="btn-theme-prev" fontSize="3" color="#ff44ff" backgroundColor="#330033" padding="1" borderRadius="1" cursor="pointer">&lt;</text>
+      <text name="theme-val" fontSize="3" color="#ff44ff">Neon Holodeck</text>
+      <text name="btn-theme-next" fontSize="3" color="#ff44ff" backgroundColor="#330033" padding="1" borderRadius="1" cursor="pointer">&gt;</text>
+    </container>
+  </container>
+  <text name="btn-back" fontSize="4" color="#ff4444" backgroundColor="#330000" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ff4444" cursor="pointer">BACK</text>
+</container>
