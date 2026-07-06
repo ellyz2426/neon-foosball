@@ -1,0 +1,339 @@
+{
+  "element": {
+    "sourceTag": "container",
+    "type": "custom",
+    "children": [
+      {
+        "sourceTag": "text",
+        "type": "custom",
+        "children": [
+          "GAME MODES"
+        ],
+        "properties": {
+          "fontsize": "7",
+          "fontweight": "bold",
+          "color": "#00e5ff"
+        },
+        "dataUid": "uid-2"
+      },
+      {
+        "sourceTag": "container",
+        "type": "custom",
+        "children": [
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Quick Match - First to 5"
+            ],
+            "properties": {
+              "name": "btn-quick",
+              "fontsize": "4",
+              "color": "#00ff88",
+              "backgroundcolor": "#003322",
+              "padding": "2",
+              "borderradius": "2",
+              "borderwidth": "0.3",
+              "bordercolor": "#00ff88",
+              "cursor": "pointer"
+            },
+            "dataUid": "uid-4"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Classic - First to 10"
+            ],
+            "properties": {
+              "name": "btn-classic",
+              "fontsize": "4",
+              "color": "#00ccff",
+              "backgroundcolor": "#002233",
+              "padding": "2",
+              "borderradius": "2",
+              "borderwidth": "0.3",
+              "bordercolor": "#00ccff",
+              "cursor": "pointer"
+            },
+            "dataUid": "uid-5"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Timed - 3 Minutes"
+            ],
+            "properties": {
+              "name": "btn-timed",
+              "fontsize": "4",
+              "color": "#ffaa00",
+              "backgroundcolor": "#332200",
+              "padding": "2",
+              "borderradius": "2",
+              "borderwidth": "0.3",
+              "bordercolor": "#ffaa00",
+              "cursor": "pointer"
+            },
+            "dataUid": "uid-6"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Tournament - 4 Rounds"
+            ],
+            "properties": {
+              "name": "btn-tournament",
+              "fontsize": "4",
+              "color": "#ff44ff",
+              "backgroundcolor": "#330033",
+              "padding": "2",
+              "borderradius": "2",
+              "borderwidth": "0.3",
+              "bordercolor": "#ff44ff",
+              "cursor": "pointer"
+            },
+            "dataUid": "uid-7"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Daily Challenge"
+            ],
+            "properties": {
+              "name": "btn-daily",
+              "fontsize": "4",
+              "color": "#ffff00",
+              "backgroundcolor": "#333300",
+              "padding": "2",
+              "borderradius": "2",
+              "borderwidth": "0.3",
+              "bordercolor": "#ffff00",
+              "cursor": "pointer"
+            },
+            "dataUid": "uid-8"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Survival - Stay Alive"
+            ],
+            "properties": {
+              "name": "btn-survival",
+              "fontsize": "4",
+              "color": "#ff4444",
+              "backgroundcolor": "#330000",
+              "padding": "2",
+              "borderradius": "2",
+              "borderwidth": "0.3",
+              "bordercolor": "#ff4444",
+              "cursor": "pointer"
+            },
+            "dataUid": "uid-9"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Speed - Fast Ball"
+            ],
+            "properties": {
+              "name": "btn-speed",
+              "fontsize": "4",
+              "color": "#ff8800",
+              "backgroundcolor": "#331100",
+              "padding": "2",
+              "borderradius": "2",
+              "borderwidth": "0.3",
+              "bordercolor": "#ff8800",
+              "cursor": "pointer"
+            },
+            "dataUid": "uid-10"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Practice - No Score"
+            ],
+            "properties": {
+              "name": "btn-practice",
+              "fontsize": "4",
+              "color": "#aaaaaa",
+              "backgroundcolor": "#222222",
+              "padding": "2",
+              "borderradius": "2",
+              "borderwidth": "0.3",
+              "bordercolor": "#666666",
+              "cursor": "pointer"
+            },
+            "dataUid": "uid-11"
+          }
+        ],
+        "properties": {
+          "direction": "column",
+          "gap": "3",
+          "alignitems": "center",
+          "padding": "2"
+        },
+        "dataUid": "uid-3"
+      },
+      {
+        "sourceTag": "text",
+        "type": "custom",
+        "children": [
+          "BACK"
+        ],
+        "properties": {
+          "name": "btn-back",
+          "fontsize": "4",
+          "color": "#ff4444",
+          "backgroundcolor": "#330000",
+          "padding": "2",
+          "borderradius": "2",
+          "borderwidth": "0.3",
+          "bordercolor": "#ff4444",
+          "cursor": "pointer"
+        },
+        "dataUid": "uid-12"
+      }
+    ],
+    "properties": {
+      "direction": "column",
+      "gap": "5",
+      "padding": "6",
+      "alignitems": "center",
+      "backgroundcolor": "#000814",
+      "borderradius": "3",
+      "borderwidth": "0.5",
+      "bordercolor": "#00e5ff"
+    },
+    "dataUid": "uid-1"
+  },
+  "classes": {},
+  "ranges": {
+    "uid-1": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 13,
+        "column": 12
+      }
+    },
+    "uid-2": {
+      "start": {
+        "line": 1,
+        "column": 2
+      },
+      "end": {
+        "line": 1,
+        "column": 72
+      }
+    },
+    "uid-3": {
+      "start": {
+        "line": 2,
+        "column": 2
+      },
+      "end": {
+        "line": 11,
+        "column": 14
+      }
+    },
+    "uid-4": {
+      "start": {
+        "line": 3,
+        "column": 4
+      },
+      "end": {
+        "line": 3,
+        "column": 199
+      }
+    },
+    "uid-5": {
+      "start": {
+        "line": 4,
+        "column": 4
+      },
+      "end": {
+        "line": 4,
+        "column": 198
+      }
+    },
+    "uid-6": {
+      "start": {
+        "line": 5,
+        "column": 4
+      },
+      "end": {
+        "line": 5,
+        "column": 192
+      }
+    },
+    "uid-7": {
+      "start": {
+        "line": 6,
+        "column": 4
+      },
+      "end": {
+        "line": 6,
+        "column": 201
+      }
+    },
+    "uid-8": {
+      "start": {
+        "line": 7,
+        "column": 4
+      },
+      "end": {
+        "line": 7,
+        "column": 190
+      }
+    },
+    "uid-9": {
+      "start": {
+        "line": 8,
+        "column": 4
+      },
+      "end": {
+        "line": 8,
+        "column": 199
+      }
+    },
+    "uid-10": {
+      "start": {
+        "line": 9,
+        "column": 4
+      },
+      "end": {
+        "line": 9,
+        "column": 192
+      }
+    },
+    "uid-11": {
+      "start": {
+        "line": 10,
+        "column": 4
+      },
+      "end": {
+        "line": 10,
+        "column": 197
+      }
+    },
+    "uid-12": {
+      "start": {
+        "line": 12,
+        "column": 2
+      },
+      "end": {
+        "line": 12,
+        "column": 176
+      }
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "element": {
+    "sourceTag": "container",
+    "type": "custom",
+    "children": [
+      {
+        "sourceTag": "text",
+        "type": "custom",
+        "children": [
+          "GOAL!"
+        ],
+        "properties": {
+          "fontsize": "8",
+          "fontweight": "bold",
+          "color": "#ffaa00"
+        },
+        "dataUid": "uid-2"
+      },
+      {
+        "sourceTag": "text",
+        "type": "custom",
+        "children": [
+          "You scored!"
+        ],
+        "properties": {
+          "name": "scorer-text",
+          "fontsize": "5",
+          "color": "#00ff88"
+        },
+        "dataUid": "uid-3"
+      },
+      {
+        "sourceTag": "text",
+        "type": "custom",
+        "children": [
+          "1 - 0"
+        ],
+        "properties": {
+          "name": "score-text",
+          "fontsize": "6",
+          "color": "#00e5ff"
+        },
+        "dataUid": "uid-4"
+      }
+    ],
+    "properties": {
+      "direction": "column",
+      "gap": "5",
+      "padding": "6",
+      "alignitems": "center",
+      "backgroundcolor": "#000814",
+      "borderradius": "3",
+      "borderwidth": "0.5",
+      "bordercolor": "#ffaa00"
+    },
+    "dataUid": "uid-1"
+  },
+  "classes": {},
+  "ranges": {
+    "uid-1": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 4,
+        "column": 12
+      }
+    },
+    "uid-2": {
+      "start": {
+        "line": 1,
+        "column": 2
+      },
+      "end": {
+        "line": 1,
+        "column": 67
+      }
+    },
+    "uid-3": {
+      "start": {
+        "line": 2,
+        "column": 2
+      },
+      "end": {
+        "line": 2,
+        "column": 74
+      }
+    },
+    "uid-4": {
+      "start": {
+        "line": 3,
+        "column": 2
+      },
+      "end": {
+        "line": 3,
+        "column": 67
+      }
+    }
+  }
+}

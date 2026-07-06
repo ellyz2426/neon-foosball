@@ -1,0 +1,661 @@
+{
+  "element": {
+    "sourceTag": "container",
+    "type": "custom",
+    "children": [
+      {
+        "sourceTag": "text",
+        "type": "custom",
+        "children": [
+          "HELP"
+        ],
+        "properties": {
+          "fontsize": "7",
+          "fontweight": "bold",
+          "color": "#aaaaaa"
+        },
+        "dataUid": "uid-2"
+      },
+      {
+        "sourceTag": "container",
+        "type": "custom",
+        "children": [
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "-- Browser Controls --"
+            ],
+            "properties": {
+              "fontsize": "4",
+              "fontweight": "bold",
+              "color": "#00e5ff"
+            },
+            "dataUid": "uid-4"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "1-4: Select rod (GK/DEF/MID/ATK)"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-5"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "A/D or Arrows: Slide rod"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-6"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Space: Kick"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-7"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Esc/P: Pause | R: Rematch"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-8"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "-- VR Controls --"
+            ],
+            "properties": {
+              "fontsize": "4",
+              "fontweight": "bold",
+              "color": "#00e5ff"
+            },
+            "dataUid": "uid-9"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Left Stick: Slide active rod"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-10"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Right Trigger: Kick"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-11"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "A: Cycle rod selection"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-12"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "B: Pause"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-13"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "-- Power-Ups --"
+            ],
+            "properties": {
+              "fontsize": "4",
+              "fontweight": "bold",
+              "color": "#ff8800"
+            },
+            "dataUid": "uid-14"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Big Ball: Ball size doubles"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#ff8800"
+            },
+            "dataUid": "uid-15"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Speed Up: Faster ball"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#00ff00"
+            },
+            "dataUid": "uid-16"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Freeze AI: AI rods stop"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#00ccff"
+            },
+            "dataUid": "uid-17"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Magnet: Ball curves to you"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#ff00ff"
+            },
+            "dataUid": "uid-18"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Shield: Blocks your goal"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#ffff00"
+            },
+            "dataUid": "uid-19"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Power Kick: 2x kick force"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#ff4444"
+            },
+            "dataUid": "uid-20"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "-- Game Tips --"
+            ],
+            "properties": {
+              "fontsize": "4",
+              "fontweight": "bold",
+              "color": "#00e5ff"
+            },
+            "dataUid": "uid-21"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Off-center hits add ball spin"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-22"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Build combos for XP bonuses"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-23"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Rally = consecutive rod touches"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-24"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Stars (1-5) boost XP rewards"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-25"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "90 achievements to unlock"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-26"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "8 table skins earned by play"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-27"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "5 holodeck themes in Settings"
+            ],
+            "properties": {
+              "fontsize": "3",
+              "color": "#cccccc"
+            },
+            "dataUid": "uid-28"
+          }
+        ],
+        "properties": {
+          "direction": "column",
+          "gap": "2",
+          "padding": "2",
+          "alignitems": "center"
+        },
+        "dataUid": "uid-3"
+      },
+      {
+        "sourceTag": "text",
+        "type": "custom",
+        "children": [
+          "BACK"
+        ],
+        "properties": {
+          "name": "btn-back",
+          "fontsize": "4",
+          "color": "#ff4444",
+          "backgroundcolor": "#330000",
+          "padding": "2",
+          "borderradius": "2",
+          "borderwidth": "0.3",
+          "bordercolor": "#ff4444",
+          "cursor": "pointer"
+        },
+        "dataUid": "uid-29"
+      }
+    ],
+    "properties": {
+      "direction": "column",
+      "gap": "3",
+      "padding": "6",
+      "alignitems": "center",
+      "backgroundcolor": "#000814",
+      "borderradius": "3",
+      "borderwidth": "0.5",
+      "bordercolor": "#aaaaaa"
+    },
+    "dataUid": "uid-1"
+  },
+  "classes": {},
+  "ranges": {
+    "uid-1": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 30,
+        "column": 12
+      }
+    },
+    "uid-2": {
+      "start": {
+        "line": 1,
+        "column": 2
+      },
+      "end": {
+        "line": 1,
+        "column": 66
+      }
+    },
+    "uid-3": {
+      "start": {
+        "line": 2,
+        "column": 2
+      },
+      "end": {
+        "line": 28,
+        "column": 14
+      }
+    },
+    "uid-4": {
+      "start": {
+        "line": 3,
+        "column": 4
+      },
+      "end": {
+        "line": 3,
+        "column": 86
+      }
+    },
+    "uid-5": {
+      "start": {
+        "line": 4,
+        "column": 4
+      },
+      "end": {
+        "line": 4,
+        "column": 78
+      }
+    },
+    "uid-6": {
+      "start": {
+        "line": 5,
+        "column": 4
+      },
+      "end": {
+        "line": 5,
+        "column": 70
+      }
+    },
+    "uid-7": {
+      "start": {
+        "line": 6,
+        "column": 4
+      },
+      "end": {
+        "line": 6,
+        "column": 57
+      }
+    },
+    "uid-8": {
+      "start": {
+        "line": 7,
+        "column": 4
+      },
+      "end": {
+        "line": 7,
+        "column": 71
+      }
+    },
+    "uid-9": {
+      "start": {
+        "line": 8,
+        "column": 4
+      },
+      "end": {
+        "line": 8,
+        "column": 81
+      }
+    },
+    "uid-10": {
+      "start": {
+        "line": 9,
+        "column": 4
+      },
+      "end": {
+        "line": 9,
+        "column": 74
+      }
+    },
+    "uid-11": {
+      "start": {
+        "line": 10,
+        "column": 4
+      },
+      "end": {
+        "line": 10,
+        "column": 65
+      }
+    },
+    "uid-12": {
+      "start": {
+        "line": 11,
+        "column": 4
+      },
+      "end": {
+        "line": 11,
+        "column": 68
+      }
+    },
+    "uid-13": {
+      "start": {
+        "line": 12,
+        "column": 4
+      },
+      "end": {
+        "line": 12,
+        "column": 54
+      }
+    },
+    "uid-14": {
+      "start": {
+        "line": 13,
+        "column": 4
+      },
+      "end": {
+        "line": 13,
+        "column": 79
+      }
+    },
+    "uid-15": {
+      "start": {
+        "line": 14,
+        "column": 4
+      },
+      "end": {
+        "line": 14,
+        "column": 73
+      }
+    },
+    "uid-16": {
+      "start": {
+        "line": 15,
+        "column": 4
+      },
+      "end": {
+        "line": 15,
+        "column": 67
+      }
+    },
+    "uid-17": {
+      "start": {
+        "line": 16,
+        "column": 4
+      },
+      "end": {
+        "line": 16,
+        "column": 69
+      }
+    },
+    "uid-18": {
+      "start": {
+        "line": 17,
+        "column": 4
+      },
+      "end": {
+        "line": 17,
+        "column": 72
+      }
+    },
+    "uid-19": {
+      "start": {
+        "line": 18,
+        "column": 4
+      },
+      "end": {
+        "line": 18,
+        "column": 70
+      }
+    },
+    "uid-20": {
+      "start": {
+        "line": 19,
+        "column": 4
+      },
+      "end": {
+        "line": 19,
+        "column": 71
+      }
+    },
+    "uid-21": {
+      "start": {
+        "line": 20,
+        "column": 4
+      },
+      "end": {
+        "line": 20,
+        "column": 79
+      }
+    },
+    "uid-22": {
+      "start": {
+        "line": 21,
+        "column": 4
+      },
+      "end": {
+        "line": 21,
+        "column": 75
+      }
+    },
+    "uid-23": {
+      "start": {
+        "line": 22,
+        "column": 4
+      },
+      "end": {
+        "line": 22,
+        "column": 73
+      }
+    },
+    "uid-24": {
+      "start": {
+        "line": 23,
+        "column": 4
+      },
+      "end": {
+        "line": 23,
+        "column": 77
+      }
+    },
+    "uid-25": {
+      "start": {
+        "line": 24,
+        "column": 4
+      },
+      "end": {
+        "line": 24,
+        "column": 74
+      }
+    },
+    "uid-26": {
+      "start": {
+        "line": 25,
+        "column": 4
+      },
+      "end": {
+        "line": 25,
+        "column": 71
+      }
+    },
+    "uid-27": {
+      "start": {
+        "line": 26,
+        "column": 4
+      },
+      "end": {
+        "line": 26,
+        "column": 74
+      }
+    },
+    "uid-28": {
+      "start": {
+        "line": 27,
+        "column": 4
+      },
+      "end": {
+        "line": 27,
+        "column": 75
+      }
+    },
+    "uid-29": {
+      "start": {
+        "line": 29,
+        "column": 2
+      },
+      "end": {
+        "line": 29,
+        "column": 176
+      }
+    }
+  }
+}
