@@ -1222,7 +1222,7 @@ function updateAI(delta: number) {
     // Only actively control rods near the ball or in the ball's path
     let targetX = ballX;
     if (ballVZ < 0 && ballZ > rodZ) {
-      // Ball moving toward AI's side — predict where it will cross this rod's Z
+      // Ball moving toward AI side - predict where it will cross this rod Z
       const timeToReach = (ballZ - rodZ) / (-ballVZ);
       targetX = ballX + GM.ballVX * timeToReach;
       targetX = Math.max(-TABLE_W / 2 + 0.3, Math.min(TABLE_W / 2 - 0.3, targetX));
