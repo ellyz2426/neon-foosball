@@ -45,6 +45,8 @@ interface Rod {
   playerCount: number;
   playerSpacing: number;
   isPlayer: boolean; // true = player's rod, false = AI
+  playerMat: MeshStandardMaterial; // for runtime theme switching
+  rodGlowMat: MeshBasicMaterial; // rod glow material
 }
 
 interface Achievement {
@@ -496,7 +498,89 @@ class AudioEngine {
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
       o.connect(g); g.connect(this.sfxGain);
       o.start(t); o.stop(t + 0.15);
+    } else if (type === 'powerup') {
+      // Sparkly power-up collection sound
+      const freqs = [660, 880, 1100, 1320, 1540];
+      freqs.forEach((f, i) => {
+        const o = this.ctx!.createOscillator();
+        const g = this.ctx!.createGain();
+        o.type = 'sine'; o.frequency.value = f * pitchVar;
+        g.gain.setValueAtTime(0.2, t + i * 0.04);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.04 + 0.15);
+        o.connect(g); g.connect(this.sfxGain!);
+        o.start(t + i * 0.04); o.stop(t + i * 0.04 + 0.15);
+      });
+    } else if (type === 'shield_block') {
+      // Deep thud + metallic ring
+      const o1 = this.ctx.createOscillator();
+      const g1 = this.ctx.createGain();
+      o1.type = 'sawtooth'; o1.frequency.value = 150;
+      g1.gain.setValueAtTime(0.35, t);
+      g1.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      o1.connect(g1); g1.connect(this.sfxGain);
+      o1.start(t); o1.stop(t + 0.2);
+      const o2 = this.ctx.createOscillator();
+      const g2 = this.ctx.createGain();
+      o2.type = 'sine'; o2.frequency.value = 1200;
+      g2.gain.setValueAtTime(0.15, t + 0.02);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      o2.connect(g2); g2.connect(this.sfxGain);
+      o2.start(t + 0.02); o2.stop(t + 0.3);
     }
+  }
+
+  playVictoryJingle() {
+    if (!this.ctx || !this.sfxGain) return;
+    const t = this.ctx.currentTime;
+    // Rising arpeggio with fanfare
+    const notes = [523, 659, 784, 988, 1047, 1319, 1568];
+    notes.forEach((f, i) => {
+      const o = this.ctx!.createOscillator();
+      const g = this.ctx!.createGain();
+      o.type = 'sine';
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.3, t + i * 0.1);
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.4);
+      o.connect(g); g.connect(this.sfxGain!);
+      o.start(t + i * 0.1); o.stop(t + i * 0.1 + 0.4);
+    });
+    // Final sustained chord
+    [1047, 1319, 1568].forEach(f => {
+      const o = this.ctx!.createOscillator();
+      const g = this.ctx!.createGain();
+      o.type = 'triangle';
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.2, t + 0.8);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 2.0);
+      o.connect(g); g.connect(this.sfxGain!);
+      o.start(t + 0.8); o.stop(t + 2.0);
+    });
+  }
+
+  playDefeatJingle() {
+    if (!this.ctx || !this.sfxGain) return;
+    const t = this.ctx.currentTime;
+    // Descending minor arpeggio
+    const notes = [440, 415, 370, 349, 311, 294, 262];
+    notes.forEach((f, i) => {
+      const o = this.ctx!.createOscillator();
+      const g = this.ctx!.createGain();
+      o.type = 'sawtooth';
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.15, t + i * 0.12);
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.12 + 0.35);
+      o.connect(g); g.connect(this.sfxGain!);
+      o.start(t + i * 0.12); o.stop(t + i * 0.12 + 0.35);
+    });
+    // Low rumble
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = 'sawtooth';
+    o.frequency.value = 80;
+    g.gain.setValueAtTime(0.15, t + 0.9);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 2.0);
+    o.connect(g); g.connect(this.sfxGain);
+    o.start(t + 0.9); o.stop(t + 2.0);
   }
 
   startDrone() {
@@ -720,6 +804,43 @@ const centerLine = new Mesh(new BoxGeometry(TABLE_W, 0.003, 0.01), new MeshBasic
 centerLine.position.set(0, TABLE_H / 2 + 0.002, 0);
 tableGroup.add(centerLine);
 
+// Center circle
+const centerCircle = new Mesh(
+  new TorusGeometry(0.35, 0.008, 8, 24),
+  new MeshBasicMaterial({ color: new Color(GM.theme.accent).getHex(), transparent: true, opacity: 0.35 })
+);
+centerCircle.rotation.x = Math.PI / 2;
+centerCircle.position.set(0, TABLE_H / 2 + 0.003, 0);
+tableGroup.add(centerCircle);
+
+// Center dot
+const centerDot = new Mesh(
+  new SphereGeometry(0.02, 8, 8),
+  new MeshBasicMaterial({ color: new Color(GM.theme.accent).getHex(), transparent: true, opacity: 0.5 })
+);
+centerDot.position.set(0, TABLE_H / 2 + 0.005, 0);
+tableGroup.add(centerDot);
+
+// Penalty area outlines
+const penaltyOutlineMat = new MeshBasicMaterial({ color: new Color(GM.theme.accent).getHex(), transparent: true, opacity: 0.2 });
+const penW = GOAL_W + 0.4;
+const penD = 0.7;
+// Player side penalty
+[1, -1].forEach(side => {
+  const zBase = side * (TABLE_L / 2);
+  const zFront = zBase - side * penD;
+  // Front line
+  const front = new Mesh(new BoxGeometry(penW, 0.003, 0.008), penaltyOutlineMat);
+  front.position.set(0, TABLE_H / 2 + 0.003, zFront);
+  tableGroup.add(front);
+  // Side lines
+  [-1, 1].forEach(lr => {
+    const sideLine = new Mesh(new BoxGeometry(0.008, 0.003, penD), penaltyOutlineMat);
+    sideLine.position.set(lr * penW / 2, TABLE_H / 2 + 0.003, zBase - side * penD / 2);
+    tableGroup.add(sideLine);
+  });
+});
+
 // ========== BALL ==========
 const ballGeo = new SphereGeometry(BALL_R, 16, 16);
 const ballMat = new MeshStandardMaterial({ color: new Color(GM.theme.ball), emissive: new Color(GM.theme.ball), emissiveIntensity: 0.5, metalness: 0.6, roughness: 0.3 });
@@ -817,6 +938,9 @@ function collectPowerUp() {
   GM.powerUpActive = false;
   powerUpGroup.visible = false;
   GM.powerUpsCollected++;
+  // Particle burst + sound on collection
+  spawnParticles(GM.powerUpX + tableGroup.position.x, TABLE_H / 2 + 0.15 + tableGroup.position.y, GM.powerUpZ + tableGroup.position.z, pu.color, 18);
+  audio.playSfx('powerup');
 
   // Activate effects
   if (pu.id === 'big_ball') {
@@ -923,9 +1047,10 @@ function createRod(zPos: number, playerCount: number, spacing: number, isPlayerS
   group.add(rodMesh);
 
   // Rod glow
+  const rodGlowMat = new MeshBasicMaterial({ color: new Color(color).getHex(), transparent: true, opacity: 0.15, blending: AdditiveBlending });
   const rodGlow = new Mesh(
     new CylinderGeometry(ROD_R * 2, ROD_R * 2, TABLE_W + 0.3, 8),
-    new MeshBasicMaterial({ color: new Color(color).getHex(), transparent: true, opacity: 0.15, blending: AdditiveBlending })
+    rodGlowMat
   );
   rodGlow.rotation.z = Math.PI / 2;
   group.add(rodGlow);
@@ -966,7 +1091,7 @@ function createRod(zPos: number, playerCount: number, spacing: number, isPlayerS
     players.push(pGroup as unknown as Mesh);
   }
 
-  return { group, players, zPos, slidePos: 0, kickAngle: 0, kickSpeed: 0, playerCount, playerSpacing: spacing, isPlayer: isPlayerSide };
+  return { group, players, zPos, slidePos: 0, kickAngle: 0, kickSpeed: 0, playerCount, playerSpacing: spacing, isPlayer: isPlayerSide, playerMat, rodGlowMat };
 }
 
 // Build player rods (defending +Z side, attacking toward -Z)
@@ -992,6 +1117,46 @@ function updateSelectedIndicator() {
     selectedIndicator.position.set(TABLE_W / 2 + 0.2, TABLE_H / 2 + PLAYER_H / 2, rod.zPos);
     selectedIndicator.visible = GM.state === 'playing';
   }
+}
+
+// ========== RUNTIME THEME SWITCHING ==========
+function applyTheme() {
+  const theme = GM.theme;
+  // Table surface & walls
+  tableMat.color.set(theme.table);
+  wallMat.color.set(theme.wall);
+  // Ball
+  ballMat.color.set(theme.ball);
+  ballMat.emissive.set(theme.ball);
+  (ballGlow.material as MeshBasicMaterial).color.set(theme.ball);
+  // Trail meshes
+  trailMeshes.forEach(tm => (tm.material as MeshBasicMaterial).color.set(theme.ball));
+  // Table edges & markings
+  (tableEdges.material as LineBasicMaterial).color.set(theme.accent);
+  (centerLine.material as MeshBasicMaterial).color.set(theme.accent);
+  (centerCircle.material as MeshBasicMaterial).color.set(theme.accent);
+  (centerDot.material as MeshBasicMaterial).color.set(theme.accent);
+  penaltyOutlineMat.color.set(theme.accent);
+  // Accent lights
+  accentLight1.color.set(theme.accent);
+  accentLight2.color.set(theme.glow);
+  // Fog
+  (scene.fog as FogExp2).color.set(theme.fog);
+  // Player rods
+  playerRods.forEach(rod => {
+    rod.playerMat.color.set(theme.player1);
+    rod.playerMat.emissive.set(theme.player1);
+    rod.rodGlowMat.color.set(theme.player1);
+  });
+  aiRods.forEach(rod => {
+    rod.playerMat.color.set(theme.player2);
+    rod.playerMat.emissive.set(theme.player2);
+    rod.rodGlowMat.color.set(theme.player2);
+  });
+  // Floating decorations
+  floatingDecos.forEach(d => (d.material as MeshBasicMaterial).color.set(theme.grid));
+  // Goal glows retain fixed colors (green=player, red=AI)
+  (selectedIndicator.material as MeshBasicMaterial).color.set(theme.player1);
 }
 
 // ========== PANELS ==========
@@ -1141,6 +1306,15 @@ function setState(newState: GameState) {
     showPanel('gameover');
     updateGameOverPanel();
     finishMatch();
+    // Play victory/defeat jingle with celebration particles
+    if (GM.playerScore > GM.aiScore) {
+      audio.playVictoryJingle();
+      spawnParticles(tableGroup.position.x, 2.5, tableGroup.position.z, new Color(GM.theme.player1).getHex(), 40);
+      spawnParticles(tableGroup.position.x - 1, 2.0, tableGroup.position.z, new Color(GM.theme.accent).getHex(), 20);
+      spawnParticles(tableGroup.position.x + 1, 2.0, tableGroup.position.z, new Color(GM.theme.glow).getHex(), 20);
+    } else {
+      audio.playDefeatJingle();
+    }
   } else if (newState === 'leaderboard') {
     showPanel('leaderboard');
     updateLeaderboardPanel();
@@ -1349,9 +1523,9 @@ function updateBallPhysics(delta: number) {
       if (GM.shieldTimer > 0) {
         GM.ballZ = halfL;
         GM.ballVZ = -Math.abs(GM.ballVZ) * 0.9;
-        audio.playSfx('save');
+        audio.playSfx('shield_block');
         showToast('SHIELD BLOCK!');
-        spawnParticles(GM.ballX + tableGroup.position.x, 1.2, GM.ballZ + tableGroup.position.z, 0xffff00, 15);
+        spawnParticles(GM.ballX + tableGroup.position.x, 1.2, GM.ballZ + tableGroup.position.z, 0xffff00, 20);
       } else {
         // AI scores!
         GM.aiScore++;
@@ -1454,6 +1628,9 @@ function checkRodBallCollisions(rods: Rod[]) {
         if (GM.ballZ > rodZ) GM.ballZ = rodZ + PLAYER_R + BALL_R + 0.01;
         else GM.ballZ = rodZ - PLAYER_R - BALL_R - 0.01;
 
+        // Collision spark particles
+        const sparkColor = rod.isPlayer ? new Color(GM.theme.player1).getHex() : new Color(GM.theme.player2).getHex();
+        spawnParticles(GM.ballX + tableGroup.position.x, TABLE_H / 2 + BALL_R + tableGroup.position.y, GM.ballZ + tableGroup.position.z, sparkColor, kickActive ? 8 : 3);
         audio.playSfx(kickActive ? 'kick' : 'hit');
         if (kickActive && rod.isPlayer) GM.shots++;
 
@@ -1673,8 +1850,8 @@ class FoosballUISystem extends createSystem({
       (doc.getElementById('btn-sfx-up') as any)?.addEventListener('click', () => { GM.sfxVol = Math.min(100, GM.sfxVol + 10); audio.updateVolumes(); updateSettingsPanel(); });
       (doc.getElementById('btn-music-down') as any)?.addEventListener('click', () => { GM.musicVol = Math.max(0, GM.musicVol - 10); audio.updateVolumes(); updateSettingsPanel(); });
       (doc.getElementById('btn-music-up') as any)?.addEventListener('click', () => { GM.musicVol = Math.min(100, GM.musicVol + 10); audio.updateVolumes(); updateSettingsPanel(); });
-      (doc.getElementById('btn-theme-prev') as any)?.addEventListener('click', () => { GM.themeIdx = (GM.themeIdx - 1 + THEMES.length) % THEMES.length; updateSettingsPanel(); });
-      (doc.getElementById('btn-theme-next') as any)?.addEventListener('click', () => { GM.themeIdx = (GM.themeIdx + 1) % THEMES.length; updateSettingsPanel(); });
+      (doc.getElementById('btn-theme-prev') as any)?.addEventListener('click', () => { GM.themeIdx = (GM.themeIdx - 1 + THEMES.length) % THEMES.length; applyTheme(); updateSettingsPanel(); });
+      (doc.getElementById('btn-theme-next') as any)?.addEventListener('click', () => { GM.themeIdx = (GM.themeIdx + 1) % THEMES.length; applyTheme(); updateSettingsPanel(); });
       (doc.getElementById('btn-back') as any)?.addEventListener('click', () => { audio.playSfx('click'); GM.save(); setState('title'); });
     });
 
