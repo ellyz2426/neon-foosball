@@ -195,6 +195,7 @@ class GameStateManager {
   slowMoTimer = 0; // slow-motion effect timer
   slowMoScale = 1; // time scale during slow-mo
   tournamentBracket: { round: number; wins: number; losses: number }[] = []; // bracket history
+  victoryLap = false;
 
   // Persistence
   stats = {
@@ -424,6 +425,17 @@ const ACHIEVEMENTS: Achievement[] = [
   { id: 'combo_15', name: 'Combo Deity', desc: 'Get x15 combo', check: () => GM.bestCombo >= 15 },
   { id: 'survival_15', name: 'Immortal', desc: 'Survive 15 minutes', check: () => GM.survivalTime >= 900 },
   { id: 'all_themes', name: 'Theme Explorer', desc: 'Play in all 5 themes', check: () => false },
+  // Round 6 achievements
+  { id: 'games_200', name: 'Marathon', desc: 'Play 200 games', check: () => GM.stats.games >= 200 },
+  { id: 'goals_2000', name: 'Goal Machine', desc: '2,000 total goals', check: () => GM.stats.totalGoals >= 2000 },
+  { id: 'accuracy_75', name: 'Sharpshooter', desc: '75% accuracy game', check: () => GM.shots > 3 && (GM.playerScore / GM.shots) >= 0.75 },
+  { id: 'win_all_diff', name: 'Versatile', desc: 'Win on all difficulties', check: () => false },
+  { id: 'combo_20', name: 'Combo Ascended', desc: 'Get x20 combo', check: () => GM.bestCombo >= 20 },
+  { id: 'blowout_hard', name: 'Hard Demolition', desc: 'Win by 5+ on Hard', check: () => GM.state === 'gameover' && GM.difficulty === 'hard' && GM.playerScore - GM.aiScore >= 5 },
+  { id: 'triple_shutout', name: 'Three Walls', desc: '3 consecutive shutouts', check: () => false },
+  { id: 'wins_100', name: 'Centurion', desc: 'Win 100 games', check: () => GM.stats.wins >= 100 },
+  { id: 'saves_500', name: 'Legendary Keeper', desc: '500 total saves', check: () => GM.stats.totalSaves >= 500 },
+  { id: 'play_time_10h', name: 'Dedicated Player', desc: '10 hours total play', check: () => GM.stats.playTime >= 36000 },
 ];
 
 // ========== AUDIO ENGINE ==========
@@ -1324,6 +1336,15 @@ const ballGlow = new Mesh(
 );
 ballMesh.add(ballGlow);
 
+// Ball shadow on table surface
+const ballShadow = new Mesh(
+  new SphereGeometry(BALL_R * 1.5, 8, 4),
+  new MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.15 })
+);
+ballShadow.scale.set(1, 0.05, 1);
+ballShadow.position.y = TABLE_H / 2 + 0.001;
+tableGroup.add(ballShadow);
+
 // ========== BALL TRAIL ==========
 const TRAIL_MAX = 12;
 const trailMeshes: Mesh[] = [];
@@ -1846,6 +1867,7 @@ function setState(newState: GameState) {
         spawnParticles(tableGroup.position.x - 0.5, 3.0, tableGroup.position.z - 1, 0xffff00, 30);
         spawnParticles(tableGroup.position.x + 0.5, 3.0, tableGroup.position.z + 1, 0xff00ff, 30);
       }
+      GM.victoryLap = true;
     } else {
       audio.playDefeatJingle();
     }
@@ -1988,6 +2010,10 @@ function updateStatsPanel() {
   setPanelText('stats', 'stat9', `Play Time: ${ptMins}m`);
   setPanelText('stats', 'stat10', `Win Streak: ${GM.stats.winStreak}`);
   setPanelText('stats', 'stat11', `Level: ${GM.stats.level} (${GM.stats.xp} XP)`);
+  const avgGoals = GM.stats.games > 0 ? (GM.stats.totalGoals / GM.stats.games).toFixed(1) : '0';
+  setPanelText('stats', 'stat12', `Avg Goals/Game: ${avgGoals}`);
+  const shotAcc = GM.stats.totalShots > 0 ? Math.round((GM.stats.totalGoals / GM.stats.totalShots) * 100) : 0;
+  setPanelText('stats', 'stat13', `Overall Accuracy: ${shotAcc}%`);
 }
 
 function updateSettingsPanel() {
@@ -2051,6 +2077,9 @@ function updateBallPosition() {
   ballMesh.position.x = GM.ballX;
   ballMesh.position.z = GM.ballZ;
   ballMesh.position.y = TABLE_H / 2 + BALL_R;
+  // Shadow follows ball
+  ballShadow.position.x = GM.ballX;
+  ballShadow.position.z = GM.ballZ;
 }
 
 function resetAllRods() {
@@ -2415,8 +2444,8 @@ class FoosballUISystem extends createSystem({
       const doc = PanelDocument.data.document[entity.index] as UIKitDocument;
       if (!doc) return;
       panelDocs['gameover'] = doc;
-      (doc.getElementById('btn-rematch') as any)?.addEventListener('click', () => { audio.playSfx('click'); setState('countdown'); });
-      (doc.getElementById('btn-menu') as any)?.addEventListener('click', () => { audio.playSfx('click'); setState('title'); });
+      (doc.getElementById('btn-rematch') as any)?.addEventListener('click', () => { audio.playSfx('click'); GM.victoryLap = false; tableGroup.rotation.y = 0; setState('countdown'); });
+      (doc.getElementById('btn-menu') as any)?.addEventListener('click', () => { audio.playSfx('click'); GM.victoryLap = false; tableGroup.rotation.y = 0; setState('title'); });
     });
 
     // Back buttons for info panels
@@ -2664,7 +2693,11 @@ class FoosballGameSystem extends createSystem({}) {
     // Title/gameover keyboard
     if (GM.state === 'gameover') {
       const kb = (world.input as any).keyboard as any;
-      if (kb?.getKeyDown?.('KeyR')) setState('countdown');
+      if (kb?.getKeyDown?.('KeyR')) { GM.victoryLap = false; tableGroup.rotation.y = 0; setState('countdown'); }
+      // Victory lap rotation
+      if (GM.victoryLap && tableGroup.visible) {
+        tableGroup.rotation.y += 0.3 * dt;
+      }
     }
 
     // Particles
