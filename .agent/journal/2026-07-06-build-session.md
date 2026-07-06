@@ -77,3 +77,32 @@
 
 ## Status
 - 255/360 min (71%) — waiting_continuation
+
+## Round 5 (60 min)
+- Wall bounce glow flash (impact sphere flash + decay on wall hits)
+- Table surface glow (dynamic light pool following ball, speed-reactive size/intensity)
+- Electric arcs between goal posts (flickering neon arc segments with random jitter)
+- Speed trail particles (8-particle trail behind fast-moving ball, fade + shrink)
+- Player figure hit glow pulse (emissive flash on rod-ball collision, 150ms decay)
+- Confetti on shutout wins (extra gold + magenta particle bursts)
+- Tournament bracket tracking (bracket history displayed in game over panel)
+- Critical timer pulse for timed mode (last 30s exclamation marks)
+- Wall bounce SFX (quick descending flash sound)
+- 10 new achievements → 80 total
+- Theme-reactive electric arcs and speed trails
+- LOC: 2,746 → deployed
+
+## Round 6 — FINAL (45 min)
+- Ball shadow on table surface (flat sphere shadow tracking ball position)
+- Victory lap rotation (gentle table rotation on win, reset on rematch/menu)
+- Enhanced stats panel (avg goals/game, overall accuracy stats)
+- Enhanced help panel (game tips, feature listing, 90 achievements mention)
+- 10 new achievements → 90 total: marathon, goal_machine, sharpshooter, versatile, combo_ascended, hard_demolition, triple_shutout, centurion, legendary_keeper, dedicated_player
+- Comprehensive README.md (features, controls, power-ups, technical details, dev setup)
+- LOC: 2,779 → final deploy
+
+## BUILD COMPLETE
+- 360/360 min — 6 rounds
+- Final LOC: 2,779
+- 16 PanelUI panels, 0 HTML DOM
+- 90 achievements, 8 modes, 6 power-ups, 5 themes, 8 skins
