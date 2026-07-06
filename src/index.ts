@@ -87,6 +87,39 @@ const SKINS = [
   { name: 'Inferno', color: '#ff6600', unlock: '100 goals' },
 ];
 
+// ========== POWER-UPS ==========
+const POWER_UPS = [
+  { id: 'big_ball', name: 'BIG BALL', color: 0xff8800, duration: 8, desc: 'Ball size doubles' },
+  { id: 'speed_boost', name: 'SPEED UP', color: 0x00ff00, duration: 6, desc: 'Ball moves faster' },
+  { id: 'freeze', name: 'FREEZE AI', color: 0x00ccff, duration: 5, desc: 'AI rods freeze' },
+  { id: 'magnet', name: 'MAGNET', color: 0xff00ff, duration: 7, desc: 'Ball curves toward your rods' },
+  { id: 'shield', name: 'SHIELD', color: 0xffff00, duration: 6, desc: 'Your goal is blocked' },
+  { id: 'power_kick', name: 'POWER KICK', color: 0xff4444, duration: 10, desc: 'Double kick force' },
+];
+
+// ========== SEEDED PRNG (mulberry32) ==========
+function mulberry32(seed: number): () => number {
+  return function() {
+    let t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function dateSeed(): number {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+// ========== AI PERSONALITIES ==========
+const AI_PERSONALITIES = {
+  aggressive: { slideSpeed: 1.3, kickRate: 0.5, forwardBias: 0.3, gkReaction: 0.8 },
+  defensive: { slideSpeed: 1.0, kickRate: 0.25, forwardBias: -0.2, gkReaction: 1.5 },
+  balanced: { slideSpeed: 1.1, kickRate: 0.35, forwardBias: 0, gkReaction: 1.0 },
+  reactive: { slideSpeed: 1.2, kickRate: 0.4, forwardBias: 0.1, gkReaction: 1.2 },
+};
+
 // ========== GAME STATE MANAGER ==========
 class GameStateManager {
   state: GameState = 'title';
@@ -117,6 +150,25 @@ class GameStateManager {
   // Ball state
   ballX = 0; ballZ = 0;
   ballVX = 0; ballVZ = 0;
+
+  // Power-ups
+  activePowerUp: string | null = null;
+  powerUpTimer = 0;
+  powerUpSpawnTimer = 0;
+  powerUpX = 0;
+  powerUpZ = 0;
+  powerUpActive = false;
+  shieldTimer = 0;
+  bigBallActive = false;
+  freezeAI = false;
+  magnetActive = false;
+  powerUpsCollected = 0;
+
+  // AI personality (per match)
+  aiPersonality: 'aggressive' | 'defensive' | 'balanced' | 'reactive' = 'balanced';
+
+  // Ball trail
+  ballTrailPositions: { x: number; z: number; age: number }[] = [];
 
   // Settings
   sfxVol = 80;
@@ -152,7 +204,9 @@ class GameStateManager {
     return 1.0;
   }
   get ballSpeedMult(): number {
-    return this.mode === 'speed' ? 1.5 : 1.0;
+    let mult = this.mode === 'speed' ? 1.5 : 1.0;
+    if (this.activePowerUp === 'speed_boost') mult *= 1.4;
+    return mult;
   }
   get xpForLevel(): number { return 100 + this.stats.level * 50; }
   get levelTitle(): string {
@@ -181,14 +235,39 @@ class GameStateManager {
     this.survivalTime = 0;
     this.lastGoalTime = 0;
     if (this.mode === 'timed') this.timeLeft = 180;
+    // Power-up reset
+    this.activePowerUp = null;
+    this.powerUpTimer = 0;
+    this.powerUpSpawnTimer = 8 + Math.random() * 7;
+    this.powerUpActive = false;
+    this.shieldTimer = 0;
+    this.bigBallActive = false;
+    this.freezeAI = false;
+    this.magnetActive = false;
+    this.powerUpsCollected = 0;
+    this.ballTrailPositions = [];
+    // AI personality randomization
+    const personalities: Array<'aggressive' | 'defensive' | 'balanced' | 'reactive'> = ['aggressive', 'defensive', 'balanced', 'reactive'];
+    if (this.mode === 'daily') {
+      const rng = mulberry32(dateSeed());
+      this.aiPersonality = personalities[Math.floor(rng() * 4)];
+    } else {
+      this.aiPersonality = personalities[Math.floor(Math.random() * 4)];
+    }
     this.resetBall();
   }
 
   resetBall() {
     this.ballX = 0;
     this.ballZ = 0;
-    this.ballVX = (Math.random() - 0.5) * 2;
-    this.ballVZ = (Math.random() > 0.5 ? 1 : -1) * 2;
+    if (this.mode === 'daily') {
+      const rng = mulberry32(dateSeed() + this.playerScore + this.aiScore);
+      this.ballVX = (rng() - 0.5) * 2;
+      this.ballVZ = (rng() > 0.5 ? 1 : -1) * 2;
+    } else {
+      this.ballVX = (Math.random() - 0.5) * 2;
+      this.ballVZ = (Math.random() > 0.5 ? 1 : -1) * 2;
+    }
   }
 
   save() {
@@ -269,6 +348,15 @@ const ACHIEVEMENTS: Achievement[] = [
   { id: 'comeback', name: 'Comeback', desc: 'Win after trailing by 3', check: () => false },
   { id: 'playtime_60', name: 'Devoted', desc: 'Play 60 total min', check: () => GM.stats.playTime >= 3600 },
   { id: 'goals_500', name: 'Legend Striker', desc: 'Score 500 total', check: () => GM.stats.totalGoals >= 500 },
+  { id: 'powerup1', name: 'Power Collector', desc: 'Collect 5 power-ups', check: () => GM.powerUpsCollected >= 5 },
+  { id: 'powerup10', name: 'Power Hoarder', desc: 'Collect 10 power-ups', check: () => GM.powerUpsCollected >= 10 },
+  { id: 'shield_block', name: 'Force Field', desc: 'Block a goal with Shield', check: () => false },
+  { id: 'freeze_goal', name: 'Frozen Strike', desc: 'Score while AI is frozen', check: () => GM.freezeAI && GM.playerScore > 0 },
+  { id: 'daily_3', name: 'Dedicated Daily', desc: 'Win 3 daily challenges', check: () => false },
+  { id: 'vs_aggressive', name: 'Tamer', desc: 'Beat an aggressive AI', check: () => GM.state === 'gameover' && GM.aiPersonality === 'aggressive' && GM.playerScore > GM.aiScore },
+  { id: 'vs_defensive', name: 'Siege Master', desc: 'Beat a defensive AI', check: () => GM.state === 'gameover' && GM.aiPersonality === 'defensive' && GM.playerScore > GM.aiScore },
+  { id: 'big_ball_goal', name: 'Big Score', desc: 'Score with Big Ball active', check: () => GM.bigBallActive && GM.playerScore > 0 },
+  { id: 'magnet_goal', name: 'Attraction', desc: 'Score with Magnet active', check: () => GM.magnetActive && GM.playerScore > 0 },
 ];
 
 // ========== AUDIO ENGINE ==========
@@ -645,6 +733,168 @@ const ballGlow = new Mesh(
 );
 ballMesh.add(ballGlow);
 
+// ========== BALL TRAIL ==========
+const TRAIL_MAX = 12;
+const trailMeshes: Mesh[] = [];
+const trailGeo = new SphereGeometry(BALL_R * 0.6, 6, 6);
+for (let i = 0; i < TRAIL_MAX; i++) {
+  const mat = new MeshBasicMaterial({ color: new Color(GM.theme.ball).getHex(), transparent: true, opacity: 0, blending: AdditiveBlending });
+  const tm = new Mesh(trailGeo, mat);
+  tm.visible = false;
+  tableGroup.add(tm);
+  trailMeshes.push(tm);
+}
+
+function updateBallTrail() {
+  const speed = Math.sqrt(GM.ballVX * GM.ballVX + GM.ballVZ * GM.ballVZ);
+  if (speed > 1.0 && GM.state === 'playing') {
+    GM.ballTrailPositions.unshift({ x: GM.ballX, z: GM.ballZ, age: 0 });
+    if (GM.ballTrailPositions.length > TRAIL_MAX) GM.ballTrailPositions.length = TRAIL_MAX;
+  }
+  for (let i = 0; i < TRAIL_MAX; i++) {
+    const pos = GM.ballTrailPositions[i];
+    if (pos && pos.age < 0.4) {
+      trailMeshes[i].visible = true;
+      trailMeshes[i].position.set(pos.x, TABLE_H / 2 + BALL_R, pos.z);
+      const alpha = 1 - pos.age / 0.4;
+      (trailMeshes[i].material as MeshBasicMaterial).opacity = alpha * 0.25;
+      const s = 1 - pos.age / 0.4;
+      trailMeshes[i].scale.setScalar(s);
+    } else {
+      trailMeshes[i].visible = false;
+    }
+  }
+}
+
+// ========== POWER-UP VISUALS ==========
+const powerUpGroup = new Group();
+powerUpGroup.visible = false;
+tableGroup.add(powerUpGroup);
+const powerUpOrb = new Mesh(
+  new SphereGeometry(0.06, 12, 12),
+  new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, blending: AdditiveBlending })
+);
+powerUpGroup.add(powerUpOrb);
+const powerUpRing = new Mesh(
+  new TorusGeometry(0.1, 0.01, 8, 16),
+  new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, blending: AdditiveBlending })
+);
+powerUpRing.rotation.x = Math.PI / 2;
+powerUpGroup.add(powerUpRing);
+const powerUpGlow = new Mesh(
+  new SphereGeometry(0.15, 8, 8),
+  new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2, blending: AdditiveBlending })
+);
+powerUpGroup.add(powerUpGlow);
+
+// Shield mesh (semi-transparent wall at player goal)
+const shieldMesh = new Mesh(
+  new BoxGeometry(GOAL_W, WALL_H * 1.5, 0.03),
+  new MeshBasicMaterial({ color: 0xffff00, transparent: true, opacity: 0, blending: AdditiveBlending })
+);
+shieldMesh.position.set(0, TABLE_H / 2 + WALL_H * 0.75, TABLE_L / 2);
+tableGroup.add(shieldMesh);
+
+function spawnPowerUp() {
+  const idx = Math.floor(Math.random() * POWER_UPS.length);
+  const pu = POWER_UPS[idx];
+  GM.powerUpX = (Math.random() - 0.5) * (TABLE_W - 0.4);
+  GM.powerUpZ = (Math.random() - 0.5) * (TABLE_L - 1.0);
+  GM.activePowerUp = pu.id;
+  GM.powerUpActive = true;
+  powerUpGroup.visible = true;
+  powerUpGroup.position.set(GM.powerUpX, TABLE_H / 2 + 0.12, GM.powerUpZ);
+  (powerUpOrb.material as MeshBasicMaterial).color.setHex(pu.color);
+  (powerUpRing.material as MeshBasicMaterial).color.setHex(pu.color);
+  (powerUpGlow.material as MeshBasicMaterial).color.setHex(pu.color);
+}
+
+function collectPowerUp() {
+  if (!GM.powerUpActive || !GM.activePowerUp) return;
+  const pu = POWER_UPS.find(p => p.id === GM.activePowerUp);
+  if (!pu) return;
+  GM.powerUpTimer = pu.duration;
+  GM.powerUpActive = false;
+  powerUpGroup.visible = false;
+  GM.powerUpsCollected++;
+
+  // Activate effects
+  if (pu.id === 'big_ball') {
+    GM.bigBallActive = true;
+    ballMesh.scale.setScalar(2);
+  } else if (pu.id === 'freeze') {
+    GM.freezeAI = true;
+  } else if (pu.id === 'magnet') {
+    GM.magnetActive = true;
+  } else if (pu.id === 'shield') {
+    GM.shieldTimer = pu.duration;
+    (shieldMesh.material as MeshBasicMaterial).opacity = 0.4;
+  }
+  showToast(`* ${pu.name} *`);
+  audio.playSfx('achievement');
+}
+
+function deactivatePowerUp() {
+  GM.bigBallActive = false;
+  GM.freezeAI = false;
+  GM.magnetActive = false;
+  GM.shieldTimer = 0;
+  (shieldMesh.material as MeshBasicMaterial).opacity = 0;
+  ballMesh.scale.setScalar(1);
+  GM.activePowerUp = null;
+}
+
+function updatePowerUps(dt: number) {
+  if (GM.state !== 'playing') return;
+
+  // Active power-up countdown
+  if (GM.powerUpTimer > 0) {
+    GM.powerUpTimer -= dt;
+    if (GM.powerUpTimer <= 0) deactivatePowerUp();
+  }
+
+  // Shield visual
+  if (GM.shieldTimer > 0) {
+    GM.shieldTimer -= dt;
+    const pulse = 0.3 + Math.sin(performance.now() * 0.01) * 0.1;
+    (shieldMesh.material as MeshBasicMaterial).opacity = GM.shieldTimer > 0 ? pulse : 0;
+    if (GM.shieldTimer <= 0) (shieldMesh.material as MeshBasicMaterial).opacity = 0;
+  }
+
+  // Spawn timer
+  if (!GM.powerUpActive && GM.powerUpTimer <= 0) {
+    GM.powerUpSpawnTimer -= dt;
+    if (GM.powerUpSpawnTimer <= 0) {
+      spawnPowerUp();
+      GM.powerUpSpawnTimer = 12 + Math.random() * 10;
+    }
+  }
+
+  // Animate power-up orb
+  if (GM.powerUpActive) {
+    powerUpGroup.position.y = TABLE_H / 2 + 0.12 + Math.sin(performance.now() * 0.004) * 0.03;
+    powerUpRing.rotation.z += 2 * dt;
+    powerUpGlow.scale.setScalar(1 + Math.sin(performance.now() * 0.006) * 0.2);
+
+    // Check ball collision with power-up
+    const dx = GM.ballX - GM.powerUpX;
+    const dz = GM.ballZ - GM.powerUpZ;
+    if (Math.sqrt(dx * dx + dz * dz) < 0.12) {
+      collectPowerUp();
+    }
+  }
+
+  // Magnet effect: curve ball toward nearest player rod
+  if (GM.magnetActive) {
+    const rod = playerRods[GM.selectedRod];
+    if (rod) {
+      const targetZ = rod.zPos;
+      const dz = targetZ - GM.ballZ;
+      GM.ballVZ += Math.sign(dz) * 0.5 * dt;
+    }
+  }
+}
+
 // ========== RODS & PLAYERS ==========
 // Rod layout: [zOffset from center, playerCount, spacing]
 // Player side (+Z = player defending): GK at +Z, ATK at center-ish
@@ -921,6 +1171,15 @@ function updateHUD() {
   const rodNames = ['GK', 'DEF', 'MID', 'ATK'];
   setPanelText('hud', 'rod-label', `Rod: ${rodNames[GM.selectedRod]}`);
   setPanelText('hud', 'combo-label', GM.combo > 1 ? `x${GM.combo}` : '');
+  // Show active power-up
+  if (GM.powerUpTimer > 0 && GM.activePowerUp) {
+    const pu = POWER_UPS.find(p => p.id === GM.activePowerUp);
+    setPanelText('hud', 'powerup-label', pu ? `${pu.name} ${Math.ceil(GM.powerUpTimer)}s` : '');
+  } else {
+    setPanelText('hud', 'powerup-label', '');
+  }
+  // Show AI personality
+  setPanelText('hud', 'ai-label', `AI: ${GM.aiPersonality.charAt(0).toUpperCase() + GM.aiPersonality.slice(1)}`);
   if (GM.mode === 'timed') {
     const mins = Math.floor(GM.timeLeft / 60);
     const secs = Math.floor(GM.timeLeft % 60);
@@ -951,6 +1210,8 @@ function updateGameOverPanel() {
   const xpGain = GM.playerScore * 10 + (won ? 50 : 10) + GM.bestCombo * 5;
   GM.addXP(xpGain);
   setPanelText('gameover', 'stat-xp', `+${xpGain} XP`);
+  setPanelText('gameover', 'stat-powerups', `Power-ups: ${GM.powerUpsCollected}`);
+  setPanelText('gameover', 'stat-ai', `AI: ${GM.aiPersonality.charAt(0).toUpperCase() + GM.aiPersonality.slice(1)}`);
 }
 
 function updateLeaderboardPanel() {
@@ -1084,18 +1345,28 @@ function updateBallPhysics(delta: number) {
   // Player goal (+Z end)
   if (GM.ballZ > halfL) {
     if (Math.abs(GM.ballX) < halfGoal) {
-      // AI scores!
-      GM.aiScore++;
-      audio.playSfx('concede');
-      spawnParticles(GM.ballX + tableGroup.position.x, 1.2, GM.ballZ + tableGroup.position.z, 0xff4444, 20);
-      GM.combo = 0;
-      setPanelText('goal', 'scorer-text', 'AI scored!');
-      setPanelText('goal', 'score-text', `${GM.playerScore} - ${GM.aiScore}`);
-      setState('goal');
-      GM.resetBall();
-      resetAllRods();
-      checkMatchEnd();
-      return;
+      // Shield power-up blocks goals
+      if (GM.shieldTimer > 0) {
+        GM.ballZ = halfL;
+        GM.ballVZ = -Math.abs(GM.ballVZ) * 0.9;
+        audio.playSfx('save');
+        showToast('SHIELD BLOCK!');
+        spawnParticles(GM.ballX + tableGroup.position.x, 1.2, GM.ballZ + tableGroup.position.z, 0xffff00, 15);
+      } else {
+        // AI scores!
+        GM.aiScore++;
+        audio.playSfx('concede');
+        spawnParticles(GM.ballX + tableGroup.position.x, 1.2, GM.ballZ + tableGroup.position.z, 0xff4444, 20);
+        GM.combo = 0;
+        deactivatePowerUp();
+        setPanelText('goal', 'scorer-text', 'AI scored!');
+        setPanelText('goal', 'score-text', `${GM.playerScore} - ${GM.aiScore}`);
+        setState('goal');
+        GM.resetBall();
+        resetAllRods();
+        checkMatchEnd();
+        return;
+      }
     } else {
       GM.ballZ = halfL;
       GM.ballVZ = -Math.abs(GM.ballVZ) * 0.9;
@@ -1170,7 +1441,8 @@ function checkRodBallCollisions(rods: Rod[]) {
       if (distX < PLAYER_R + BALL_R && distZ < PLAYER_R + BALL_R) {
         // Collision!
         const kickActive = Math.abs(rod.kickSpeed) > 1.0;
-        const power = kickActive ? KICK_FORCE : 2.0;
+        const basePower = kickActive ? KICK_FORCE : 2.0;
+        const power = (GM.activePowerUp === 'power_kick' && rod.isPlayer) ? basePower * 2 : basePower;
         const direction = rod.isPlayer ? -1 : 1; // Toward opponent goal
 
         // Deflection based on hit position
@@ -1209,45 +1481,63 @@ function checkMatchEnd() {
 // ========== AI SYSTEM ==========
 function updateAI(delta: number) {
   if (GM.state !== 'playing') return;
+  if (GM.freezeAI) return; // Power-up: AI frozen
   const speed = GM.aiSpeedMult;
+  const personality = AI_PERSONALITIES[GM.aiPersonality];
   const ballX = GM.ballX;
   const ballZ = GM.ballZ;
   const ballVZ = GM.ballVZ;
 
-  for (const rod of aiRods) {
-    // AI tracks ball X position for the nearest relevant rod
+  for (let ri = 0; ri < aiRods.length; ri++) {
+    const rod = aiRods[ri];
     const rodZ = rod.zPos;
     const distToBall = Math.abs(ballZ - rodZ);
+    const isGK = ri === 0;
 
-    // Only actively control rods near the ball or in the ball's path
     let targetX = ballX;
     if (ballVZ < 0 && ballZ > rodZ) {
-      // Ball moving toward AI side - predict where it will cross this rod Z
       const timeToReach = (ballZ - rodZ) / (-ballVZ);
       targetX = ballX + GM.ballVX * timeToReach;
+      // Aggressive AI adds forward bias to attack positioning
+      if (!isGK) targetX += personality.forwardBias * 0.3;
       targetX = Math.max(-TABLE_W / 2 + 0.3, Math.min(TABLE_W / 2 - 0.3, targetX));
+    } else if (personality.forwardBias < 0 && !isGK) {
+      // Defensive AI centers idle rods
+      targetX *= 0.5;
     }
 
-    // Convert target to slide position
     const targetSlide = targetX / (TABLE_W / 2 - 0.3);
-    const slideSpeed = (1.5 + speed) * delta;
+    const aiSlideSpeed = (1.5 + speed * personality.slideSpeed) * delta;
     const diff = targetSlide - rod.slidePos;
     if (Math.abs(diff) > 0.02) {
-      rod.slidePos += Math.sign(diff) * Math.min(Math.abs(diff), slideSpeed);
+      rod.slidePos += Math.sign(diff) * Math.min(Math.abs(diff), aiSlideSpeed);
     }
     rod.slidePos = Math.max(-1, Math.min(1, rod.slidePos));
 
+    // GK reaction enhanced by personality
+    const gkBonus = isGK ? personality.gkReaction : 1.0;
+
     // AI kick when ball is near
-    if (distToBall < 0.3 && ballVZ < 0.5) {
-      // Check if any player on this rod can kick
+    const kickRange = isGK ? 0.4 : 0.3;
+    if (distToBall < kickRange && ballVZ < 0.5) {
       for (let i = 0; i < rod.playerCount; i++) {
         const xOffset = rod.playerCount === 1 ? 0 : (i - (rod.playerCount - 1) / 2) * rod.playerSpacing;
         const px = rod.slidePos * (TABLE_W / 2 - 0.3) + xOffset;
         if (Math.abs(px - ballX) < PLAYER_R * 2 + BALL_R && Math.abs(ballZ - rodZ) < PLAYER_R * 3) {
-          if (rod.kickSpeed === 0 && Math.random() < (0.3 + speed * 0.3) * delta * 10) {
+          const kickChance = (personality.kickRate + speed * 0.3) * gkBonus * delta * 10;
+          if (rod.kickSpeed === 0 && Math.random() < kickChance) {
             rod.kickSpeed = 15 + speed * 5;
           }
         }
+      }
+    }
+
+    // Reactive AI mirrors player rod selection
+    if (GM.aiPersonality === 'reactive' && !isGK) {
+      const mirrorRod = playerRods[3 - ri]; // Mirror corresponding rod
+      if (mirrorRod) {
+        const mirrorInfluence = 0.3;
+        rod.slidePos += (mirrorRod.slidePos - rod.slidePos) * mirrorInfluence * delta;
       }
     }
   }
@@ -1491,6 +1781,13 @@ class FoosballGameSystem extends createSystem({}) {
 
       // Ball physics
       updateBallPhysics(dt);
+
+      // Power-ups
+      updatePowerUps(dt);
+
+      // Ball trail
+      GM.ballTrailPositions.forEach(p => p.age += dt);
+      updateBallTrail();
 
       // AI
       updateAI(dt);

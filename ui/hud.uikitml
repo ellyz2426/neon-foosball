@@ -1,7 +1,9 @@
-<container direction="row" gap="8" padding="3" alignItems="center" backgroundColor="#00081480" borderRadius="2" borderWidth="0.3" borderColor="#00e5ff40">
+<container direction="row" gap="6" padding="3" alignItems="center" backgroundColor="#00081480" borderRadius="2" borderWidth="0.3" borderColor="#00e5ff40">
   <text name="score-display" fontSize="5" fontWeight="bold" color="#00ff88">0 - 0</text>
   <text name="mode-label" fontSize="3" color="#00ccff">Quick Match</text>
   <text name="time-display" fontSize="4" color="#ffaa00">--:--</text>
   <text name="rod-label" fontSize="3" color="#ff44ff">Rod: ATK</text>
-  <text name="combo-label" fontSize="3" color="#ffff00">x1</text>
+  <text name="combo-label" fontSize="3" color="#ffff00"></text>
+  <text name="powerup-label" fontSize="3" fontWeight="bold" color="#ff8800"></text>
+  <text name="ai-label" fontSize="2" color="#888888">AI: Balanced</text>
 </container>

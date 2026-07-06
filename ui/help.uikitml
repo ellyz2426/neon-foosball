@@ -3,21 +3,26 @@
   <container direction="column" gap="2" padding="2" alignItems="center">
     <text fontSize="4" fontWeight="bold" color="#00e5ff">-- Browser Controls --</text>
     <text fontSize="3" color="#cccccc">1-4: Select rod (GK/DEF/MID/ATK)</text>
-    <text fontSize="3" color="#cccccc">A/D: Slide rod left/right</text>
-    <text fontSize="3" color="#cccccc">Space: Kick (spin rod)</text>
-    <text fontSize="3" color="#cccccc">W/S: Fine-tune rod position</text>
+    <text fontSize="3" color="#cccccc">A/D or Arrows: Slide rod</text>
+    <text fontSize="3" color="#cccccc">Space: Kick</text>
     <text fontSize="3" color="#cccccc">Esc/P: Pause</text>
-    <text fontSize="3" color="#cccccc">R: Rematch (on game over)</text>
     <text fontSize="4" fontWeight="bold" color="#00e5ff">-- VR Controls --</text>
     <text fontSize="3" color="#cccccc">Left Stick: Slide active rod</text>
     <text fontSize="3" color="#cccccc">Right Trigger: Kick</text>
-    <text fontSize="3" color="#cccccc">A/X: Cycle rod selection</text>
+    <text fontSize="3" color="#cccccc">A: Cycle rod selection</text>
     <text fontSize="3" color="#cccccc">B: Pause</text>
-    <text fontSize="4" fontWeight="bold" color="#00e5ff">-- Gameplay --</text>
-    <text fontSize="3" color="#cccccc">Select a rod, slide to position</text>
-    <text fontSize="3" color="#cccccc">Kick to spin and hit the ball</text>
-    <text fontSize="3" color="#cccccc">Score in the opponent goal to win</text>
-    <text fontSize="3" color="#cccccc">Quick goals build combo multiplier</text>
+    <text fontSize="4" fontWeight="bold" color="#ff8800">-- Power-Ups --</text>
+    <text fontSize="3" color="#cccccc">Glowing orbs spawn on the table</text>
+    <text fontSize="3" color="#cccccc">Hit them with the ball to collect</text>
+    <text fontSize="3" color="#ff8800">Big Ball: Ball doubles in size</text>
+    <text fontSize="3" color="#00ff00">Speed Up: Ball moves faster</text>
+    <text fontSize="3" color="#00ccff">Freeze AI: AI rods stop moving</text>
+    <text fontSize="3" color="#ff00ff">Magnet: Ball curves to your rods</text>
+    <text fontSize="3" color="#ffff00">Shield: Blocks your goal briefly</text>
+    <text fontSize="3" color="#ff4444">Power Kick: Double kick force</text>
+    <text fontSize="4" fontWeight="bold" color="#00e5ff">-- AI Types --</text>
+    <text fontSize="3" color="#cccccc">Each match has a random AI style:</text>
+    <text fontSize="3" color="#cccccc">Aggressive, Defensive, Balanced, Reactive</text>
   </container>
   <text name="btn-back" fontSize="4" color="#ff4444" backgroundColor="#330000" padding="2" borderRadius="2" borderWidth="0.3" borderColor="#ff4444" cursor="pointer">BACK</text>
 </container>
