@@ -190,6 +190,10 @@ class GameStateManager {
   longestRally = 0;
   currentRally = 0;
   goalTimes: number[] = []; // timestamps of goals for stats
+  maxTrailingBy = 0; // max deficit for comeback tracking
+  comboTriples = 0; // count of times combo hit 3+ in a match
+  slowMoTimer = 0; // slow-motion effect timer
+  slowMoScale = 1; // time scale during slow-mo
 
   // Persistence
   stats = {
@@ -269,6 +273,10 @@ class GameStateManager {
     this.currentRally = 0;
     this.goalTimes = [];
     this.cameraShakeIntensity = 0;
+    this.maxTrailingBy = 0;
+    this.comboTriples = 0;
+    this.slowMoTimer = 0;
+    this.slowMoScale = 1;
     // AI personality randomization
     const personalities: Array<'aggressive' | 'defensive' | 'balanced' | 'reactive'> = ['aggressive', 'defensive', 'balanced', 'reactive'];
     if (this.mode === 'daily') {
@@ -392,6 +400,17 @@ const ACHIEVEMENTS: Achievement[] = [
   { id: 'streak10', name: 'Unstoppable', desc: 'Win 10 in a row', check: () => GM.stats.currentStreak >= 10 },
   { id: 'shutout_hard', name: 'Perfect Game', desc: 'Shutout on Hard', check: () => GM.state === 'gameover' && GM.difficulty === 'hard' && GM.playerScore > GM.aiScore && GM.aiScore === 0 },
   { id: 'all_skins', name: 'Collector', desc: 'Unlock all skins', check: () => GM.skinUnlocked.size >= 8 },
+  // Round 4 achievements
+  { id: 'comeback', name: 'Comeback Kid', desc: 'Win after trailing by 3+', check: () => GM.state === 'gameover' && GM.playerScore > GM.aiScore && GM.maxTrailingBy >= 3 },
+  { id: 'five_star', name: 'Five Stars', desc: 'Get 5-star rating', check: () => false },
+  { id: 'speed_goal', name: 'Hyperspeed', desc: 'Score with ball at max speed', check: () => false },
+  { id: 'no_powerup_win', name: 'Purist', desc: 'Win without using power-ups', check: () => GM.state === 'gameover' && GM.playerScore > GM.aiScore && GM.powerUpsCollected === 0 },
+  { id: 'rally_30', name: 'Rally God', desc: '30-touch rally', check: () => GM.longestRally >= 30 },
+  { id: 'win_survival_10', name: 'Endurance', desc: 'Survive 10 minutes', check: () => GM.survivalTime >= 600 },
+  { id: 'triple_combo', name: 'Triple Threat', desc: 'x3 combo 3 times in one match', check: () => GM.comboTriples >= 3 },
+  { id: 'total_time_5h', name: 'Time Lord', desc: '5 hours total play time', check: () => GM.stats.playTime >= 18000 },
+  { id: 'wins_50', name: 'Half Century', desc: 'Win 50 games', check: () => GM.stats.wins >= 50 },
+  { id: 'daily_streak', name: 'Daily Grinder', desc: 'Win 5 daily challenges', check: () => false },
 ];
 
 // ========== AUDIO ENGINE ==========
@@ -559,6 +578,17 @@ class AudioEngine {
       g2.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
       o2.connect(g2); g2.connect(this.sfxGain);
       o2.start(t + 0.02); o2.stop(t + 0.3);
+    } else if (type === 'slide') {
+      // Soft metallic slide sound
+      const o = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      o.type = 'triangle';
+      o.frequency.value = 180 * pitchVar;
+      o.frequency.linearRampToValueAtTime(120, t + 0.06);
+      g.gain.setValueAtTime(0.06, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      o.connect(g); g.connect(this.sfxGain);
+      o.start(t); o.stop(t + 0.06);
     }
   }
 
@@ -1001,6 +1031,135 @@ function makeGoalPosts(zSide: number, mat: MeshBasicMaterial) {
 makeGoalPosts(-1, goalPostMat1); // AI goal (player scores here) = green
 makeGoalPosts(1, goalPostMat2);  // Player goal (AI scores here) = red
 
+// ========== GOAL NETS ==========
+const netMeshes: Mesh[] = [];
+function makeGoalNet(zSide: number, color: number) {
+  const netGroup = new Group();
+  const netMat = new MeshBasicMaterial({ color, transparent: true, opacity: 0.15, blending: AdditiveBlending });
+  const z = zSide * TABLE_L / 2;
+  const netDepth = 0.3;
+  const netH = WALL_H * 1.0;
+  const strands = 6;
+  // Vertical strands
+  for (let i = 0; i <= strands; i++) {
+    const x = -GOAL_W / 2 + (GOAL_W / strands) * i;
+    const strand = new Mesh(new CylinderGeometry(0.004, 0.004, netH, 4), netMat);
+    strand.position.set(x, TABLE_H / 2 + netH / 2, z + zSide * netDepth / 2);
+    tableGroup.add(strand);
+    netMeshes.push(strand);
+  }
+  // Horizontal strands
+  for (let j = 0; j <= 3; j++) {
+    const y = TABLE_H / 2 + (netH / 3) * j;
+    const strand = new Mesh(new CylinderGeometry(0.004, 0.004, GOAL_W, 4), netMat);
+    strand.rotation.z = Math.PI / 2;
+    strand.position.set(0, y, z + zSide * netDepth / 2);
+    tableGroup.add(strand);
+    netMeshes.push(strand);
+  }
+  // Back panel (rear of net)
+  const backPanel = new Mesh(
+    new BoxGeometry(GOAL_W, netH, 0.005),
+    new MeshBasicMaterial({ color, transparent: true, opacity: 0.06, blending: AdditiveBlending })
+  );
+  backPanel.position.set(0, TABLE_H / 2 + netH / 2, z + zSide * netDepth);
+  tableGroup.add(backPanel);
+  netMeshes.push(backPanel);
+  // Top netting
+  const topNet = new Mesh(
+    new BoxGeometry(GOAL_W, 0.005, netDepth),
+    new MeshBasicMaterial({ color, transparent: true, opacity: 0.08, blending: AdditiveBlending })
+  );
+  topNet.position.set(0, TABLE_H / 2 + netH, z + zSide * netDepth / 2);
+  tableGroup.add(topNet);
+  netMeshes.push(topNet);
+}
+makeGoalNet(-1, 0x00ff88); // AI goal = green net
+makeGoalNet(1, 0xff4444);  // Player goal = red net
+
+// ========== SCOREBOARD HOLOGRAM ==========
+const scoreboardGroup = new Group();
+scoreboardGroup.position.set(0, 2.8, -2.5); // Above table
+scene.add(scoreboardGroup);
+// Frame
+const sbFrameMat = new MeshBasicMaterial({ color: new Color(GM.theme.accent).getHex(), transparent: true, opacity: 0.3, blending: AdditiveBlending });
+const sbFrame = new Mesh(new BoxGeometry(1.2, 0.5, 0.01), sbFrameMat);
+scoreboardGroup.add(sbFrame);
+// Score glow bars (left = player, right = AI)
+const sbLeftBar = new Mesh(
+  new BoxGeometry(0.08, 0.35, 0.005),
+  new MeshBasicMaterial({ color: new Color(GM.theme.player1).getHex(), transparent: true, opacity: 0.6, blending: AdditiveBlending })
+);
+sbLeftBar.position.set(-0.45, 0, 0.01);
+scoreboardGroup.add(sbLeftBar);
+const sbRightBar = new Mesh(
+  new BoxGeometry(0.08, 0.35, 0.005),
+  new MeshBasicMaterial({ color: new Color(GM.theme.player2).getHex(), transparent: true, opacity: 0.6, blending: AdditiveBlending })
+);
+sbRightBar.position.set(0.45, 0, 0.01);
+scoreboardGroup.add(sbRightBar);
+// Score pips (visual dots representing score)
+const maxPips = 10;
+const sbPipsLeft: Mesh[] = [];
+const sbPipsRight: Mesh[] = [];
+const pipGeo = new SphereGeometry(0.025, 6, 6);
+for (let i = 0; i < maxPips; i++) {
+  const pipL = new Mesh(pipGeo, new MeshBasicMaterial({ color: new Color(GM.theme.player1).getHex(), transparent: true, opacity: 0, blending: AdditiveBlending }));
+  pipL.position.set(-0.2 - i * 0.065, 0, 0.01);
+  scoreboardGroup.add(pipL);
+  sbPipsLeft.push(pipL);
+  const pipR = new Mesh(pipGeo, new MeshBasicMaterial({ color: new Color(GM.theme.player2).getHex(), transparent: true, opacity: 0, blending: AdditiveBlending }));
+  pipR.position.set(0.2 + i * 0.065, 0, 0.01);
+  scoreboardGroup.add(pipR);
+  sbPipsRight.push(pipR);
+}
+// Divider line
+const sbDivider = new Mesh(
+  new BoxGeometry(0.01, 0.4, 0.005),
+  new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, blending: AdditiveBlending })
+);
+scoreboardGroup.add(sbDivider);
+
+function updateScoreboard() {
+  for (let i = 0; i < maxPips; i++) {
+    (sbPipsLeft[i].material as MeshBasicMaterial).opacity = i < GM.playerScore ? 0.8 : 0.08;
+    (sbPipsRight[i].material as MeshBasicMaterial).opacity = i < GM.aiScore ? 0.8 : 0.08;
+  }
+  scoreboardGroup.visible = GM.state === 'playing' || GM.state === 'goal' || GM.state === 'countdown';
+}
+
+// ========== AMBIENT HOLODECK PARTICLES ==========
+const ambientParticles: { mesh: Mesh; vx: number; vy: number; vz: number; baseY: number; phase: number }[] = [];
+const ambientParticleGeo = new SphereGeometry(0.008, 4, 4);
+for (let i = 0; i < 40; i++) {
+  const mat = new MeshBasicMaterial({ color: new Color(GM.theme.grid).getHex(), transparent: true, opacity: 0.15 + Math.random() * 0.15, blending: AdditiveBlending });
+  const m = new Mesh(ambientParticleGeo, mat);
+  const angle = Math.random() * Math.PI * 2;
+  const dist = 3 + Math.random() * 6;
+  const y = 0.5 + Math.random() * 3.5;
+  m.position.set(Math.cos(angle) * dist, y, Math.sin(angle) * dist);
+  scene.add(m);
+  ambientParticles.push({
+    mesh: m,
+    vx: (Math.random() - 0.5) * 0.1,
+    vy: 0.02 + Math.random() * 0.05,
+    vz: (Math.random() - 0.5) * 0.1,
+    baseY: y,
+    phase: Math.random() * Math.PI * 2,
+  });
+}
+
+function updateAmbientParticles(dt: number) {
+  const t = performance.now() * 0.001;
+  for (const p of ambientParticles) {
+    p.mesh.position.y = p.baseY + Math.sin(t * 0.5 + p.phase) * 0.3;
+    p.mesh.position.x += Math.sin(t * 0.2 + p.phase) * 0.002;
+    p.mesh.position.z += Math.cos(t * 0.15 + p.phase * 1.3) * 0.002;
+    const scale = 0.8 + Math.sin(t * 2 + p.phase) * 0.3;
+    p.mesh.scale.setScalar(scale);
+  }
+}
+
 // ========== BALL ==========
 const ballGeo = new SphereGeometry(BALL_R, 16, 16);
 const ballMat = new MeshStandardMaterial({ color: new Color(GM.theme.ball), emissive: new Color(GM.theme.ball), emissiveIntensity: 0.5, metalness: 0.6, roughness: 0.3 });
@@ -1028,6 +1187,13 @@ for (let i = 0; i < TRAIL_MAX; i++) {
 
 function updateBallTrail() {
   const speed = Math.sqrt(GM.ballVX * GM.ballVX + GM.ballVZ * GM.ballVZ);
+  // Ball glow intensity scales with speed
+  const glowIntensity = Math.min(0.6, 0.15 + speed * 0.06);
+  const glowScale = 1 + Math.min(1.5, speed * 0.2);
+  (ballGlow.material as MeshBasicMaterial).opacity = glowIntensity;
+  ballGlow.scale.setScalar(glowScale);
+  ballMat.emissiveIntensity = 0.3 + Math.min(0.7, speed * 0.1);
+
   if (speed > 1.0 && GM.state === 'playing') {
     GM.ballTrailPositions.unshift({ x: GM.ballX, z: GM.ballZ, age: 0 });
     if (GM.ballTrailPositions.length > TRAIL_MAX) GM.ballTrailPositions.length = TRAIL_MAX;
@@ -1361,6 +1527,14 @@ function applyTheme() {
   tableLegGlows.forEach(g => (g.material as MeshBasicMaterial).color.set(theme.accent));
   // Goal glows retain fixed colors (green=player, red=AI)
   (selectedIndicator.material as MeshBasicMaterial).color.set(theme.player1);
+  // Scoreboard
+  sbFrameMat.color.set(theme.accent);
+  (sbLeftBar.material as MeshBasicMaterial).color.set(theme.player1);
+  (sbRightBar.material as MeshBasicMaterial).color.set(theme.player2);
+  sbPipsLeft.forEach(p => (p.material as MeshBasicMaterial).color.set(theme.player1));
+  sbPipsRight.forEach(p => (p.material as MeshBasicMaterial).color.set(theme.player2));
+  // Ambient particles
+  ambientParticles.forEach(p => (p.mesh.material as MeshBasicMaterial).color.set(theme.grid));
 }
 
 // ========== PANELS ==========
@@ -1586,11 +1760,27 @@ function updateGameOverPanel() {
   setPanelText('gameover', 'stat-time', `Time: ${mins}:${secs < 10 ? '0' : ''}${secs}`);
   setPanelText('gameover', 'stat-combo', `Best Combo: x${GM.bestCombo}`);
   setPanelText('gameover', 'stat-rally', `Longest Rally: ${GM.longestRally}`);
-  const xpGain = GM.playerScore * 10 + (won ? 50 : 10) + GM.bestCombo * 5 + GM.longestRally;
+  // Star rating (1-5)
+  const stars = calcStarRating(won, acc);
+  const starStr = '\u2605'.repeat(stars) + '\u2606'.repeat(5 - stars);
+  setPanelText('gameover', 'stat-stars', starStr);
+  const xpGain = GM.playerScore * 10 + (won ? 50 : 10) + GM.bestCombo * 5 + GM.longestRally + stars * 10;
   GM.addXP(xpGain);
   setPanelText('gameover', 'stat-xp', `+${xpGain} XP`);
   setPanelText('gameover', 'stat-powerups', `Power-ups: ${GM.powerUpsCollected}`);
   setPanelText('gameover', 'stat-ai', `AI: ${GM.aiPersonality.charAt(0).toUpperCase() + GM.aiPersonality.slice(1)}`);
+}
+
+function calcStarRating(won: boolean, accuracy: number): number {
+  let stars = 0;
+  if (won) stars += 2; else stars += 1;
+  if (accuracy >= 60) stars++;
+  if (GM.bestCombo >= 3) stars++;
+  if (GM.aiScore === 0 && won) stars++;
+  if (GM.playerScore - GM.aiScore >= 3 && won) stars++;
+  if (GM.longestRally >= 10) stars++;
+  if (GM.difficulty === 'hard') stars++;
+  return Math.min(5, Math.max(1, stars));
 }
 
 function updateLeaderboardPanel() {
@@ -1735,6 +1925,9 @@ function updateBallPhysics(delta: number) {
         // AI scores!
         GM.aiScore++;
         GM.currentRally = 0;
+        // Track comeback deficit
+        const deficit = GM.aiScore - GM.playerScore;
+        if (deficit > GM.maxTrailingBy) GM.maxTrailingBy = deficit;
         audio.playSfx('concede');
         GM.cameraShakeIntensity = 0.02;
         spawnParticles(GM.ballX + tableGroup.position.x, 1.2, GM.ballZ + tableGroup.position.z, 0xff4444, 20);
@@ -1767,6 +1960,7 @@ function updateBallPhysics(delta: number) {
       GM.combo++;
       GM.comboTimer = 5;
       if (GM.combo > GM.bestCombo) GM.bestCombo = GM.combo;
+      if (GM.combo === 3) GM.comboTriples++;
       if (GM.combo > 1) {
         audio.playSfx('combo');
       }
@@ -1882,6 +2076,9 @@ function checkRodBallCollisions(rods: Rod[]) {
 function checkMatchEnd() {
   const target = GM.goalTarget;
   if (GM.playerScore >= target || GM.aiScore >= target) {
+    // Trigger slow-motion for match-winning goal
+    GM.slowMoTimer = 1.5;
+    GM.slowMoScale = 0.25;
     if (GM.state !== 'gameover') setState('gameover');
   }
 }
@@ -2132,8 +2329,14 @@ function performKick() {
 // ========== GAME LOOP SYSTEM ==========
 class FoosballGameSystem extends createSystem({}) {
   update(delta: number) {
-    // Clamp delta
-    const dt = Math.min(delta, 0.05);
+    // Clamp delta + slow-motion
+    let dt = Math.min(delta, 0.05);
+    if (GM.slowMoTimer > 0) {
+      GM.slowMoTimer -= delta;
+      dt *= GM.slowMoScale;
+      GM.slowMoScale = Math.min(1, GM.slowMoScale + delta * 0.3); // gradual ramp back to 1
+      if (GM.slowMoTimer <= 0) { GM.slowMoScale = 1; }
+    }
 
     // Countdown
     if (GM.state === 'countdown') {
@@ -2234,6 +2437,7 @@ class FoosballGameSystem extends createSystem({}) {
         // Slide rod
         const rod = playerRods[GM.selectedRod];
         if (rod) {
+          const prevSlide = rod.slidePos;
           const slideSpeed = 2.5 * dt;
           if (kb.getKeyPressed?.('KeyA') || kb.getKeyPressed?.('ArrowLeft')) {
             rod.slidePos = Math.max(-1, rod.slidePos - slideSpeed);
@@ -2241,6 +2445,7 @@ class FoosballGameSystem extends createSystem({}) {
           if (kb.getKeyPressed?.('KeyD') || kb.getKeyPressed?.('ArrowRight')) {
             rod.slidePos = Math.min(1, rod.slidePos + slideSpeed);
           }
+          if (Math.abs(rod.slidePos - prevSlide) > 0.01) audio.playSfx('slide');
         }
 
         // Kick
@@ -2336,6 +2541,17 @@ class FoosballGameSystem extends createSystem({}) {
     // Selected rod indicator pulse
     (selectedIndicator.material as MeshBasicMaterial).opacity = 0.4 + Math.sin(performance.now() * 0.005) * 0.3;
     selectedIndicator.rotation.z += 2 * dt;
+
+    // Scoreboard hologram
+    updateScoreboard();
+    scoreboardGroup.rotation.y = Math.sin(performance.now() * 0.0005) * 0.03;
+
+    // Ambient holodeck particles
+    updateAmbientParticles(dt);
+
+    // Net shimmer
+    const netShimmer = 0.12 + Math.sin(performance.now() * 0.002) * 0.04;
+    netMeshes.forEach(n => { if ((n.material as MeshBasicMaterial).transparent) (n.material as MeshBasicMaterial).opacity = netShimmer; });
   }
 }
 

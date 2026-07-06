@@ -10,6 +10,7 @@
     <text name="stat-time" fontSize="3" color="#cccccc">Time: 2:45</text>
     <text name="stat-combo" fontSize="3" color="#cccccc">Best Combo: x3</text>
     <text name="stat-rally" fontSize="3" color="#cccccc">Longest Rally: 0</text>
+    <text name="stat-stars" fontSize="5" color="#ffaa00">★★★☆☆</text>
     <text name="stat-powerups" fontSize="3" color="#ff8800">Power-ups: 0</text>
     <text name="stat-ai" fontSize="3" color="#888888">AI: Balanced</text>
     <text name="stat-xp" fontSize="3" color="#ffff00">+120 XP</text>
